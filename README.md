@@ -3,6 +3,9 @@
 ## 概要
 このアプリは、プログラミングをする上で発生したエラーや開発途中で挫折したところを記録として残しておく。プログラミング言語別にエラー対処やコマンドなどを記録できるようにする。それをＸ（twitter）のように公開できるようにする。個人のためのメモとしても使用可能。また、投稿した内容に対して別の利用者からコメントを残せる。それにより対処できていないエラーを解決できる。
 
+## ターゲット
+- プログラミングをする人
+
 ## 使用技術
 - TypeScript
 - Next.js
@@ -23,6 +26,9 @@
 
 ## 外部設計
 - [Figmaのデザイン](https://www.figma.com/design/1pq0Uf01VPFQEIMx8ZqHuH/Seeker?node-id=0-1&t=4wqO40XXk6KsJysm-1)
+
+## API設計
+- [Googleスプレッドシート](https://docs.google.com/spreadsheets/d/1pOuy_k0J7hm6br6gfcyaAyNJsbBD9HvcXvZUBWEq6qo/edit?usp=sharing)
 
 ## Qiitaとの差別化要素
 - 「未解決」のまま流せるタイムライン
