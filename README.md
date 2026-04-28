@@ -21,6 +21,9 @@
     - アクティビティ機能（他ユーザーからの回答）
     - AIによる自動整理
 
+## 外部設計
+- [Figmaのデザイン](https://www.figma.com/design/1pq0Uf01VPFQEIMx8ZqHuH/Seeker?node-id=0-1&t=4wqO40XXk6KsJysm-1)
+
 ## Qiitaとの差別化要素
 - 「未解決」のまま流せるタイムライン
 Qiitaは「解決策」を書く場所ですが、このツールは**「今、このエラーで詰まっている」というプロセスそのもの**を投稿の主役にします。
