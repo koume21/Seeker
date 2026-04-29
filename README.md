@@ -30,6 +30,14 @@
 ## API設計
 - [Googleスプレッドシート](https://docs.google.com/spreadsheets/d/1pOuy_k0J7hm6br6gfcyaAyNJsbBD9HvcXvZUBWEq6qo/edit?usp=sharing)
 
+## DB設計
+### 必要なテーブル
+    - Users(ユーザー登録、ログイン)
+    - Languages(言語管理)
+    - Posts(投稿)
+    - Likes(いいね)
+### ER図
+    - [ER図](https://dbdiagram.io/d/Seeker-69f15f43c6a36f9c1bafa0d5)
 ## Qiitaとの差別化要素
 - 「未解決」のまま流せるタイムライン
     - Qiitaは「解決策」を書く場所ですが、このツールは**「今、このエラーで詰まっている」というプロセスそのもの**を投稿の主役にします。
