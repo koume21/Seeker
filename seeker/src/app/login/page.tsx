@@ -39,7 +39,7 @@ export default function LoginPage() {
         {/* GitHubログインボタン */}
         <form action={async () => {
           "use server"
-          await signIn("github", { redirectTo: "/" })
+          await signIn("github", { redirectTo: "/main/home" })
         }}>
         <button type="submit" className="mt-4 w-full bg-black text-white p-2.5 rounded-md hover:bg-gray-800 flex items-center justify-center gap-2">
             <FaGithub size={20} />
