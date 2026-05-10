@@ -19,7 +19,7 @@ export async function registerUser(formData: FormData) {
   });
 
   // return newUser; ではなく、リダイレクトさせる
-  redirect('/register'); 
+  redirect('/main/home'); 
 }
 
 export async function loginAction(formData: FormData) {
