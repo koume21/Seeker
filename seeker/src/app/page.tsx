@@ -1,3 +1,5 @@
+import { signOut } from "@/auth"
+import { redirect } from "next/navigation";
 
 export default function Home() {
   return (
@@ -14,6 +16,7 @@ export default function Home() {
           npm error! code ERESOLVE
         </code>
       </div>
+      
     </main>
   );
 }
