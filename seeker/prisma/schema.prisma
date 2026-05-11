@@ -14,18 +14,18 @@ datasource db {
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -41,16 +41,17 @@ model Session {
 }
 
 model User {
-  id            String       @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
-  password      String?   // Credentialsログイン用
+  password      String? // Credentialsログイン用
   emailVerified DateTime? // Auth.jsが使用
-  image         String?   // GitHubのアイコンURLが入る
+  image         String? // GitHubのアイコンURLが入る
   accounts      Account[]
   sessions      Session[]
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  posts         Post[]
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
 }
 
 model VerificationToken {
@@ -59,4 +60,30 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Language {
+  id    Int    @id @default(autoincrement())
+  name  String @unique // Ruby, Next.js など
+  posts Post[]
+}
+
+model Post {
+  id               Int     @id @default(autoincrement())
+  title            String
+  content          String  @db.Text
+  error_message    String? @db.Text
+  programming_code String? @db.Text
+  status           String  @default("published")
+
+  // リレーション用ID
+  userId     String // User.idに合わせてString型に
+  languageId Int
+
+  // リレーション定義
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 }
