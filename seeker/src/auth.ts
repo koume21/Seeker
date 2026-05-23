@@ -33,7 +33,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { 
+    strategy: "jwt",
+    maxAge: 30 * 60
+  },
   callbacks: {
     // ログイン後のセッションにユーザーIDを含めるための設定
     async session({ session, token }) {
@@ -42,5 +45,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
+    async jwt({ token, trigger }) {
+      // 最初（ログイン時）に有効期限が設定されていない、または新しく設定する場合
+      if (!token.exp_time) {
+        // 現在時刻から30秒後のタイムスタンプを独自に保存
+        token.exp_time = Math.floor(Date.now() / 1000) + 30 * 60;
+      }
+
+      // 毎回チェックを実行し、30秒を過ぎていたらトークンを意図的に無効化（過去の時間を設定）する
+      const now = Math.floor(Date.now() / 1000);
+      if (now > (token.exp_time as number)) {
+        token.exp = now - 10; // すでに期限切れの状態にする
+      } else {
+        token.exp = token.exp_time as number;;
+      }
+
+      return token;
+    }
   },
 })
