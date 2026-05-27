@@ -2,6 +2,7 @@
 import { auth, signOut } from "@/auth";
 import Link from "next/link";
 import {prisma} from '@/lib/prisma';
+import { MainProvider } from './components/user-provider';
 import { 
   ChevronRightIcon, 
   PlusIcon, 
@@ -17,13 +18,6 @@ export default async function MainLayout({
   children: React.ReactNode;
 }) {
     const session = await auth();
-
-    // プラスボタンが押された時のサーバー処理
-    async function clickPlus() {
-    "use server";
-    console.log("プラスボタンが押されました");
-    // ここにDB保存などの処理を書く
-    }
     if (!session?.user?.id) return[];
     const userId = session.user.id;
 
@@ -36,10 +30,8 @@ export default async function MainLayout({
                     }
                 }
             },
-            select: {name:true}
         }
     );
-
 
     return (
         <div className="flex h-screen bg-white text-gray-800">
@@ -74,18 +66,6 @@ export default async function MainLayout({
                     <ChevronRightIcon className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
                 </Link>
                 ))}
-
-                {/* 言語プラスボタン */}
-                <div>
-                <form action={clickPlus}>
-                    <button type="submit" className="group flex items-center gap-2 p-3 mt-2 text-gray-500 hover:text-gray-800 w-full">
-                    <span className="p-1 rounded-full transition-colors duration-200 group-hover:bg-gray-100">
-                        <PlusIcon className="w-6 h-6" />
-                    </span>
-                    </button>
-                </form>
-                </div>
-
                 {/* ログアウトボタン */}
                 <div className="p-4 border-t border-gray-200">
                 <form
@@ -126,7 +106,9 @@ export default async function MainLayout({
 
             {/* ページごとに中身が切り替わるエリア */}
             <main className="flex-1 overflow-y-auto">
-                {children}
+                <MainProvider userId={userId} languages={languages}>
+                    {children}
+                </MainProvider>
             </main>
             </div>
         </div>

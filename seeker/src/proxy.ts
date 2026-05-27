@@ -4,8 +4,7 @@ import { auth } from "@/auth"
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
-  console.log(req.auth);
-  // 1. ログインページにいるかどうか
+   // 1. ログインページにいるかどうか
   const isLoginPage = nextUrl.pathname === "/login";
 
   // 2. ログインしていない、かつログインページ以外にアクセスしようとしたらリダイレクト
