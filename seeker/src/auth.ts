@@ -4,6 +4,8 @@ import Google from "next-auth/providers/google"  //google連携
 import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
+import { JWT } from "next-auth/jwt";
+
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -39,13 +41,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     // ログイン後のセッションにユーザーIDを含めるための設定
-    async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+    async jwt({ token, trigger,account }) {
+      if(account) {
+        token.provider = account.provider;
       }
-      return session;
-    },
-    async jwt({ token, trigger }) {
       // 最初（ログイン時）に有効期限が設定されていない、または新しく設定する場合
       if (!token.exp_time) {
         // 現在時刻から30秒後のタイムスタンプを独自に保存
@@ -61,6 +60,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
 
       return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+        (session.user as any).provider = token.provider as string;
+      }
+      return session;
     }
   },
 })
