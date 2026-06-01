@@ -12,6 +12,7 @@ export function HeaderNav() {
     const pathname = usePathname();
 
     const isPostActive = pathname.startsWith("/main/home");
+    const isActivityActive = pathname.startsWith("/main/activity")
     const isSettingActive = pathname.startsWith("/main/setting");
 
     const activeStyle = "flex item-center gap-2 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 pb-4 transition-colors";
@@ -24,9 +25,11 @@ export function HeaderNav() {
                     <ChatBubbleBottomCenterTextIcon className = "w-5 h-5 "/> Post
                 </button>
             </Link>
-            <button className={inactiveStyle}>
-                <ChartBarIcon className="w-5 h-5" /> Activity
-            </button>
+            <Link href="/main/activity" className="inline-block">
+                <button className={isActivityActive ? activeStyle : inactiveStyle}>
+                    <ChartBarIcon className="w-5 h-5" /> Activity
+                </button>
+            </Link>
 
             <Link href="/main/setting" className="inline-block">
                 <button className={isSettingActive ? activeStyle : inactiveStyle}>
