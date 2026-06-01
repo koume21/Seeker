@@ -1,9 +1,9 @@
-
+'use server'
 import { loginAction } from "../actions/action";
 import { signIn } from "@/auth"
 import { FaGithub } from "react-icons/fa";
 
-export default function LoginPage() {
+export default async function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
