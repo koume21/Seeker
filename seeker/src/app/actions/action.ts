@@ -25,7 +25,7 @@ export async function registerUser(formData: FormData) {
 export async function loginAction(formData: FormData) {
   try {
     //redirectToを指定することで、成功時の挙動を明示的に指定できます
-    await signIn("credentials", { ...Object.fromEntries(formData), redirectTo: "/" });
+    await signIn("credentials", { ...Object.fromEntries(formData), redirectTo: "/main/home" });
   } catch (error) {
     if (error instanceof AuthError) {
       // ここで return "エラー文字" とせずに、ログに留める
