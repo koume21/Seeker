@@ -2,6 +2,7 @@
 import { loginAction } from "../actions/action";
 import { signIn } from "@/auth"
 import { FaGithub } from "react-icons/fa";
+import Link from 'next/link';
 
 export default async function LoginPage() {
   return (
@@ -9,6 +10,7 @@ export default async function LoginPage() {
       <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold mb-6 text-gray-800 text-center">ログイン</h1>
         
+        {/* メールアドレス・パスワードログイン */}
         <form action={loginAction} className="flex flex-col gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
@@ -35,17 +37,28 @@ export default async function LoginPage() {
             ログインする
           </button>
         </form>
-        <hr />
+
+        <div className="my-6 border-t border-gray-200"></div> {/* 見栄えのためにhrを少し調整 */}
+
         {/* GitHubログインボタン */}
         <form action={async () => {
           "use server"
           await signIn("github", { redirectTo: "/main/home" })
         }}>
-        <button type="submit" className="mt-4 w-full bg-black text-white p-2.5 rounded-md hover:bg-gray-800 flex items-center justify-center gap-2">
-            <FaGithub size={20} />
-            GitHubでログイン
-        </button>
-      </form>
+          <button type="submit" className="w-full bg-black text-white p-2.5 rounded-md hover:bg-gray-800 flex items-center justify-center gap-2">
+              <FaGithub size={20} />
+              GitHubでログイン
+          </button>
+        </form>
+
+        {/* 💡 新規登録画面へのリンクを追加 */}
+        <div className="mt-6 text-center text-sm">
+          <span className="text-gray-600">アカウントをお持ちでないですか？ </span>
+          <Link href={`/resister`} className="text-blue-600 font-semibold hover:underline">
+            新規登録
+          </Link>
+        </div>
+
       </div>
     </main>
   );
