@@ -1,4 +1,5 @@
 import { registerUser } from "../actions/action";
+import Link from 'next/link';
 
 export default function RegisterPage() {
   return (
@@ -41,6 +42,12 @@ export default function RegisterPage() {
             登録する
           </button>
         </form>
+        <div className="mt-6 text-center text-sm">
+          <span className="text-gray-600">既にアカウントをお持ちですか？ </span>
+          <Link href={`/login`} className="text-green-600 font-semibold hover:underline">
+            ログイン
+          </Link>
+        </div>
       </div>
     </main>
   );
