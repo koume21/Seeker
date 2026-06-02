@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { prisma } from "@/lib/prisma";
-export default async function Setting() {
+
+export default async function ActivityPage() {
     const session = await auth();
     const provider = (session?.user as any)?.provider;
     console.log('--------------------');
