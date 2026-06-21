@@ -76,13 +76,13 @@ model Post {
   programming_code String? @db.Text
   status           String  @default("published")
 
-  // リレーション用ID
   userId     String // User.idに合わせてString型に
   languageId Int
 
-  // リレーション定義
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   language Language @relation(fields: [languageId], references: [id])
+
+  isPublished      Boolean @default(false)
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

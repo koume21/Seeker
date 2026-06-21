@@ -77,7 +77,6 @@ export default async function NewPostPage({searchParams} : PageProps) {
             redirect("/main/home");
         }
     }
-    
     return (
         <div className="relative p-6 bg-white rounded-xl shadow-sm">
         {/* 右上のゴミ箱ボタン */}
