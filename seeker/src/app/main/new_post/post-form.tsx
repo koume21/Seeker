@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 // import CodeBlock  from "../components/CodeBlock";
 
 interface PostFormProps {
-  onPublish: (id: number | null, title: string, content: string, languageId: number, status:string) => Promise<void>;
+  onPublish: (id: number | null, title: string, content: string, languageId: number, status:string,isPublished:boolean) => Promise<void>;
   post: {
     id: number;
     title: string;
@@ -20,21 +20,22 @@ interface PostFormProps {
 
 export default function PostForm({ onPublish, post }: PostFormProps) {
   const router = useRouter();
+  const [isPublished,seIsPublished] = useState<boolean>(post?post.isPublished:false)
   const { languages: initialLanguages } = useMainData();
-  const [languages, setLanguages] = useState(initialLanguages);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newLanguageName, setNewLanguageName] = useState("");
-
+  const [languages, setLanguages] = useState(initialLanguages); //初期言語
+  const [isModalOpen, setIsModalOpen] = useState(false); //モーダルウィンドウ
+  const [isPublisWindow,setPublishWindow] = useState(false); // publish設定
+  const [initialPublish,setinitialPublish] = useState(isPublished); //言語選択の初期値
+  const [newLanguageName, setNewLanguageName] = useState(""); //言語名
+  // 言語id
   const [selectedLanguageId, setSelectedLanguageId] = useState<number | null>(
     post ? post.languageId : (languages[0]?.id ?? null)
   );
-
+  // タイトル入力
   const [title, setTitle] = useState(post ? post.title : "");
-
-
-
+  // 状況確認
   const [status, setStatus] = useState<string>(post ? post.status : "UNRESOLVED");
+  // 入力内容
   const [content, setContent] = useState(
     post 
       ? post.content 
@@ -52,14 +53,14 @@ npm run dev
       setSelectedLanguageId(post ? post.languageId : languages[0].id);
     }
   }, [languages, post, selectedLanguageId]);
-
+  // page.tsxへ保存
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return alert("タイトルを入力してください");
     if (!content.trim()) return alert("内容を入力してください");
     if (selectedLanguageId === null) return alert("プログラミング言語を選択してください");
     if (!status) return alert("進捗を選択してください");
-    await onPublish(post ? post.id : null, title, content, selectedLanguageId,status);
+    await onPublish(post ? post.id : null, title, content, selectedLanguageId,status,initialPublish);
   };
 
   const handleAddLanguage = async () => {
@@ -122,9 +123,10 @@ npm run dev
       }
     });
   };
+  //解決の判断
   const isResolved = status.toUpperCase() === 'RESOLVED' || status === '解決';
   // 公開・非公開
-  const [isPublished,seIsPublished] = useState<boolean>(post?post.isPublished:false)
+
   console.log(isPublished);
   return (
     <form onSubmit={handleSubmit} className="px-6 pt-4 py-10 max-w-[1400px] mx-auto w-full">
@@ -139,7 +141,8 @@ npm run dev
         </div>
 
         <button 
-          type="submit"
+          type="button"
+          onClick={() => setPublishWindow(true)}
           className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-lg font-semibold text-xs tracking-wide transition-colors shadow-sm whitespace-nowrap"
         >
           {post ? "保存" : "作成"}
@@ -249,7 +252,7 @@ npm run dev
 
       </div>
 
-      {/* モーダルウィンドウ */}
+      {/* 言語追加モーダルウィンドウ */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 backdrop-blur-sm">
           <div className="bg-white rounded-xl border border-slate-200 p-6 w-full max-w-sm mx-4 shadow-md">
@@ -282,6 +285,112 @@ npm run dev
                   className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
                 >
                   追加する
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 公開・非公開選択モーダルウィンドウ */}
+      { isPublisWindow && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/20 backdrop-blur-sm">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 w-full max-w-sm mx-4 shadow-md">
+            <h3 className="text-sm font-bold text-slate-800 mb-4">選択してください</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  公開・非公開
+                </label>
+                
+                <div className="grid grid-cols-1 gap-3">
+                  {/* 🔒 非公開カード */}
+                  <label 
+                    className={`
+                      flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 shadow-sm bg-white
+                      ${!initialPublish 
+                        ? 'border-indigo-600 bg-indigo-50/30' 
+                        : 'border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50'
+                      }
+                    `}
+                  >
+                    <div className="relative flex items-center justify-center">
+                      <input 
+                        type="radio" 
+                        name="publishSetting"
+                        checked={!initialPublish}
+                        onChange={() => setinitialPublish(false)} // ⭕ 選択されたらfalse（非公開）に
+                        className="sr-only" // デフォルトの無骨なラジオボタンを非表示にする
+                      />
+                      {/* カスタムラジオの外枠 */}
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${!initialPublish ? 'border-indigo-600' : 'border-slate-300'}`}>
+                        {/* 中のポッチ */}
+                        {!initialPublish && <div className="w-2 h-2 rounded-full bg-indigo-600" />}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2.5">
+                      <span className={`text-sm transition-colors ${!initialPublish ? 'text-indigo-600' : 'text-slate-400'}`}>🔒</span>
+                      <div>
+                        <p className={`text-xs font-bold transition-colors ${!initialPublish ? 'text-slate-900' : 'text-slate-600'}`}>
+                          非公開
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">自分だけのプライベートなバグメモとして保管します</p>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* 🌐 公開カード */}
+                  <label 
+                    className={`
+                      flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 shadow-sm bg-white
+                      ${initialPublish 
+                        ? 'border-indigo-600 bg-indigo-50/30' 
+                        : 'border-slate-200/80 hover:border-slate-300 hover:bg-slate-50/50'
+                      }
+                    `}
+                  >
+                    <div className="relative flex items-center justify-center">
+                      <input 
+                        type="radio" 
+                        name="publishSetting"
+                        checked={initialPublish}
+                        onChange={() => setinitialPublish(true)} // ⭕ 選択されたらtrue（公開）に
+                        className="sr-only"
+                      />
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${initialPublish ? 'border-indigo-600' : 'border-slate-300'}`}>
+                        {initialPublish && <div className="w-2 h-2 rounded-full bg-indigo-600" />}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2.5">
+                      <span className={`text-sm transition-colors ${initialPublish ? 'text-indigo-600' : 'text-slate-400'}`}>🌐</span>
+                      <div>
+                        <p className={`text-xs font-bold transition-colors ${initialPublish ? 'text-slate-900' : 'text-slate-600'}`}>
+                          公開
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5">タイムラインに共有し、他のユーザーが閲覧・コメントできるようにします</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              
+              {/* --- フッターボタンエリア --- */}
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setPublishWindow(false) }}
+                  className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 rounded-lg transition-colors border border-slate-200/60 shadow-sm"
+                >
+                  戻る
+                </button>
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors shadow-sm"
+                >
+                  保存
                 </button>
               </div>
             </div>

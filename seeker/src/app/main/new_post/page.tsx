@@ -23,7 +23,7 @@ export default async function NewPostPage({searchParams} : PageProps) {
     }
 
 
-    async function handlePublish(id: number | null,title: string, content: string, languageId:number, status:string) {
+    async function handlePublish(id: number | null,title: string, content: string, languageId:number, status:string,isPublished:boolean) {
         "use server";
 
         if (!title.trim() || !content.trim()){
@@ -45,6 +45,7 @@ export default async function NewPostPage({searchParams} : PageProps) {
                             content: content,
                             languageId: languageId,
                             status:status,
+                            isPublished:isPublished,
                         }
                     });
                     isSuccess = true;
@@ -61,6 +62,7 @@ export default async function NewPostPage({searchParams} : PageProps) {
                             userId: userId,
                             languageId: languageId,
                             status:status,
+                            isPublished:isPublished,
                         },
                     });
                     console.log("DB保存成功:",newPost);
