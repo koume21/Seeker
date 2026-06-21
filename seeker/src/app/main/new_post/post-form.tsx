@@ -27,6 +27,7 @@ export default function PostForm({ onPublish, post }: PostFormProps) {
   const [isPublisWindow,setPublishWindow] = useState(false); // publish設定
   const [initialPublish,setinitialPublish] = useState(isPublished); //言語選択の初期値
   const [newLanguageName, setNewLanguageName] = useState(""); //言語名
+  const [showPreview, setShowPreview] = useState<boolean>(true);
   // 言語id
   const [selectedLanguageId, setSelectedLanguageId] = useState<number | null>(
     post ? post.languageId : (languages[0]?.id ?? null)
@@ -129,7 +130,7 @@ npm run dev
 
   console.log(isPublished);
   return (
-    <form onSubmit={handleSubmit} className="px-6 pt-4 py-10 max-w-[1400px] mx-auto w-full">
+    <form onSubmit={handleSubmit} className="pt-4 py-10 max-w-[1400px] mx-auto w-full">
       
 
       <div className="mb-8 pb-5 border-b border-slate-100 flex items-center justify-between gap-4">
@@ -140,16 +141,29 @@ npm run dev
           <p className="text-xs text-slate-400 mt-1.5 font-medium">エラーログや解決した知見を美しくストックします。</p>
         </div>
 
-        <button 
-          type="button"
-          onClick={() => setPublishWindow(true)}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-lg font-semibold text-xs tracking-wide transition-colors shadow-sm whitespace-nowrap"
-        >
-          {post ? "保存" : "作成"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className={`px-4 py-2.5 rounded-lg font-semibold text-xs transition-all border flex items-center gap-2 shadow-sm whitespace-nowrap ${
+              showPreview 
+                ? 'bg-indigo-50 text-indigo-600 border-indigo-200' 
+                : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200'
+            }`}
+          >
+            <span>{showPreview ? "👁️ プレビュー非表示" : "👁️ プレビュー表示"}</span>
+          </button>
+          <button 
+            type="button"
+            onClick={() => setPublishWindow(true)}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-lg font-semibold text-xs tracking-wide transition-colors shadow-sm whitespace-nowrap"
+          >
+            {post ? "保存" : "作成"}
+          </button>
+        </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+      <div className={`grid grid-cols-1 gap-8 items-stretch transition-all duration-300 ${showPreview ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
         
         {/* --- 左側：エディタエリア --- */}
         <div className="flex flex-col space-y-4 lg:h-[calc(100vh-220px)] lg:min-h-[600px]">
@@ -235,20 +249,22 @@ npm run dev
         </div>
 
         {/* --- 右側：リアルタイムプレビューエリア --- */}
-        <div className="hidden lg:flex flex-col lg:h-[calc(100vh-220px)] lg:min-h-[600px] bg-slate-50/40 border border-slate-100 rounded-xl p-5 min-w-0 overflow-hidden">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 shrink-0">
-            Real-time Preview
-          </div>
-          
-          <div className="flex-1 bg-white rounded-xl p-6 border border-slate-200/60 shadow-sm flex flex-col w-full min-w-0 overflow-y-auto">
-            <h1 className="text-lg font-bold text-slate-800 mb-4 whitespace-pre-wrap break-all leading-snug shrink-0">
-              {title || <span className="text-slate-300 italic font-normal">タイトル未入力</span>}
-            </h1>
-            <div className="flex-1 space-y-2 w-full min-w-0">
-              {content.trim() ? renderPreview(content) : <span className="text-slate-300 italic text-xs">内容を入力するとここにプレビューされます</span>}
+        {showPreview && (
+          <div className="hidden lg:flex flex-col lg:h-[calc(100vh-220px)] lg:min-h-[600px] bg-slate-50/40 border border-slate-100 rounded-xl p-3 min-w-0 overflow-hidden">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 shrink-0">
+              Real-time Preview
+            </div>
+            
+            <div className="flex-1 bg-white rounded-xl p-4 border border-slate-200/60 shadow-sm flex flex-col w-full min-w-0 overflow-y-auto">
+              <h1 className="text-lg font-bold text-slate-800 mb-4 whitespace-pre-wrap break-all leading-snug shrink-0">
+                {title || <span className="text-slate-300 italic font-normal">タイトル未入力</span>}
+              </h1>
+              <div className="flex-1 space-y-2 w-full min-w-0">
+                {content.trim() ? renderPreview(content) : <span className="text-slate-300 italic text-xs">内容を入力するとここにプレビューされます</span>}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
       </div>
 
