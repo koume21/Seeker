@@ -5,9 +5,10 @@ import React, { useState } from 'react';
 type Props = {
   postId: string | number;
   initialStatus: string;
+  user : boolean
 };
 
-export function StatusSelect({ postId, initialStatus }: Props) {
+export function StatusSelect({ postId, initialStatus,user }: Props) {
   const [status, setStatus] = useState(initialStatus);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -48,17 +49,27 @@ export function StatusSelect({ postId, initialStatus }: Props) {
           ${isUpdating ? 'opacity-50' : ''}
         `}
       >
-        <select
-          value={status}
-          onChange={handleChange}
-          disabled={isUpdating}
-          className="bg-transparent cursor-pointer appearance-none outline-none w-full h-full text-center pr-4 font-sans text-xs"
-          style={{ color: 'inherit' }}
-        >
+      { user ? (
+        <>
+          <select
+            value={status}
+            onChange={handleChange}
+            disabled={isUpdating}
+            className="bg-transparent cursor-pointer appearance-none outline-none w-full h-full text-center pr-4 font-sans text-xs"
+            style={{ color: 'inherit' }}
+          >
 
-          <option value="UNRESOLVED" className="text-slate-800 bg-white">未解決</option>
-          <option value="RESOLVED" className="text-slate-800 bg-white">解決</option>
-        </select>
+            <option value="UNRESOLVED" className="text-slate-800 bg-white">未解決</option>
+            <option value="RESOLVED" className="text-slate-800 bg-white">解決</option>
+          </select>
+          <span className="absolute right-2.5 pointer-events-none text-[8px] opacity-70">▼</span>
+        </>
+        
+      ):( 
+        <span className="px-1 py-0.5">
+          {isResolved ? "解決" : "未解決"}
+        </span>
+      )}  
       </div>
     </div>
   );

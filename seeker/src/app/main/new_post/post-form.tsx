@@ -12,6 +12,7 @@ interface PostFormProps {
     content: string;
     status: string;
     languageId: number;
+    isPublished: boolean;
     created_at: Date;
     updated_at: Date;
   } | null;
@@ -122,6 +123,9 @@ npm run dev
     });
   };
   const isResolved = status.toUpperCase() === 'RESOLVED' || status === '解決';
+  // 公開・非公開
+  const [isPublished,seIsPublished] = useState<boolean>(post?post.isPublished:false)
+  console.log(isPublished);
   return (
     <form onSubmit={handleSubmit} className="px-6 pt-4 py-10 max-w-[1400px] mx-auto w-full">
       

@@ -36,6 +36,11 @@ export function HeaderNav() {
                 <Cog6ToothIcon className="w-5 h-5" /> Setting
                 </button>
             </Link>
+            <Link href="/main/publish" className="inline-block">
+                <button className={isSettingActive ? activeStyle : inactiveStyle}>
+                <Cog6ToothIcon className="w-5 h-5" /> Publish
+                </button>
+            </Link>
         </div>
     )
 }
