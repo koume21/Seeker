@@ -21,7 +21,7 @@ export default async function PublishPage({ searchParams }: PageProps) {
 
 
     return (
-    <div className="max-w-5xl mx-auto px-6 py-12 md:py-16">
+    <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
       {/* --- ヘッダー：あえて大きな線を排し、洗練されたタイポグラフィと配置で魅せる --- */}
       <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-slate-100 pb-6">
         <div>
@@ -44,7 +44,7 @@ export default async function PublishPage({ searchParams }: PageProps) {
 
       {/* --- 投稿リスト：背景のトーンをわずかに変化させるモダン・グリッド --- */}
       {publish_post.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 gap-7 w-full max-w-none">
           {publish_post.map((post) => (
             <article 
                 key={post.id} 
