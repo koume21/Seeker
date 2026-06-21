@@ -1,8 +1,11 @@
-// src/app/main/new_post/page.tsx
 import { prisma } from "@/lib/prisma";
 import PostForm from "./post-form";
 import { auth } from '@/auth';
 import { redirect } from "next/navigation";
+import { Delete } from './_action';
+import { FaComment } from "react-icons/fa";
+import { Trash2 } from 'lucide-react';
+import DeleteButton from "./delete_button";
 
 interface PageProps {
     searchParams: Promise<{ edit?:string }>;
@@ -20,18 +23,13 @@ export default async function NewPostPage({searchParams} : PageProps) {
     }
 
 
-    async function handlePublish(id: number | null,title: string, content: string, languageId:number) {
+    async function handlePublish(id: number | null,title: string, content: string, languageId:number, status:string) {
         "use server";
 
         if (!title.trim() || !content.trim()){
             throw new Error("タイトルと内容は必須です");
         }
 
-        // console.log("=== サーバー側でデータを受信 ===");
-        // console.log("id:", id);
-        // console.log("language:", languageId);
-        // console.log("タイトル:", title);
-        // console.log("内容（Markdown形式）:", content);
         let isSuccess = false;
         try {
             // 2. postの有無で処理を分岐
@@ -46,6 +44,7 @@ export default async function NewPostPage({searchParams} : PageProps) {
                             title: title,
                             content: content,
                             languageId: languageId,
+                            status:status,
                         }
                     });
                     isSuccess = true;
@@ -61,6 +60,7 @@ export default async function NewPostPage({searchParams} : PageProps) {
                             content: content,
                             userId: userId,
                             languageId: languageId,
+                            status:status,
                         },
                     });
                     console.log("DB保存成功:",newPost);
@@ -77,11 +77,18 @@ export default async function NewPostPage({searchParams} : PageProps) {
             redirect("/main/home");
         }
     }
-
+    
     return (
-        <div className="p-6">
-        {/* 型が一致するようになり、エラーが解消されます */}
-        <PostForm onPublish={handlePublish} post={post}/>
+        <div className="relative p-6 bg-white rounded-xl shadow-sm">
+        {/* 右上のゴミ箱ボタン */}
+        {post ? (
+            <DeleteButton postId={post.id} />
+        ) : (
+            ""
+        )}
+
+        {/* メインのフォーム */}
+        <PostForm onPublish={handlePublish} post={post} />
         </div>
     );
 }

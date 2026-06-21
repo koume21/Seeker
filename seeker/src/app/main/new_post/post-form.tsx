@@ -2,9 +2,10 @@
 import { useState, useEffect } from "react";
 import { useMainData } from "../components/user-provider";
 import { useRouter } from "next/navigation";
+// import CodeBlock  from "../components/CodeBlock";
 
 interface PostFormProps {
-  onPublish: (id: number | null, title: string, content: string, languageId: number) => Promise<void>;
+  onPublish: (id: number | null, title: string, content: string, languageId: number, status:string) => Promise<void>;
   post: {
     id: number;
     title: string;
@@ -29,6 +30,10 @@ export default function PostForm({ onPublish, post }: PostFormProps) {
   );
 
   const [title, setTitle] = useState(post ? post.title : "");
+
+
+
+  const [status, setStatus] = useState<string>(post ? post.status : "UNRESOLVED");
   const [content, setContent] = useState(
     post 
       ? post.content 
@@ -52,8 +57,8 @@ npm run dev
     if (!title.trim()) return alert("タイトルを入力してください");
     if (!content.trim()) return alert("内容を入力してください");
     if (selectedLanguageId === null) return alert("プログラミング言語を選択してください");
-    
-    await onPublish(post ? post.id : null, title, content, selectedLanguageId);
+    if (!status) return alert("進捗を選択してください");
+    await onPublish(post ? post.id : null, title, content, selectedLanguageId,status);
   };
 
   const handleAddLanguage = async () => {
@@ -86,12 +91,15 @@ npm run dev
   // プレビューレンダラー（突き抜け防止対応）
   const renderPreview = (text: string) => {
     const parts = text.split(/(`{3}[\s\S]*?`{3})/g);
+    const found = languages.find(item=>item.id===selectedLanguageId)
+    const lang_Name = found?.name ?? "";
+    console.log(lang_Name);
     return parts.map((part, index) => {
       if (part.startsWith("```") && part.endsWith("```")) {
         const codeContent = part.slice(3, -3).trim();
+        
         return (
-          /* w-full と min-w-0 を追加して、親の幅を超えないように制御 */
-          <div key={index} className="my-3 w-full min-w-0 bg-slate-950 rounded-xl overflow-hidden border border-slate-900 shadow-sm">
+           <div key={index} className="my-3 w-full min-w-0 bg-slate-950 rounded-xl overflow-hidden border border-slate-900 shadow-sm">
             <div className="flex items-center gap-1.5 bg-slate-900/80 px-4 py-2 border-b border-slate-900">
               <span className="w-2 h-2 rounded-full bg-rose-500/70 block"></span>
               <span className="w-2 h-2 rounded-full bg-amber-500/70 block"></span>
@@ -113,24 +121,34 @@ npm run dev
       }
     });
   };
-
+  const isResolved = status.toUpperCase() === 'RESOLVED' || status === '解決';
   return (
-    <div className="px-6 py-12 max-w-[1400px] mx-auto w-full">
-      {/* ページタイトルヘッダー（現代的なミニマルスタイル） */}
-      <div className="mb-8 pb-5 border-b border-slate-100">
-        <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
-          {post ? "投稿を編集" : "新規投稿を作成"}
-        </h2>
-        <p className="text-xs text-slate-400 mt-1.5 font-medium">エラーログや解決した知見を美しくストックします。</p>
+    <form onSubmit={handleSubmit} className="px-6 pt-4 py-10 max-w-[1400px] mx-auto w-full">
+      
+
+      <div className="mb-8 pb-5 border-b border-slate-100 flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+            {post ? "投稿を編集" : "新規投稿を作成"}
+          </h2>
+          <p className="text-xs text-slate-400 mt-1.5 font-medium">エラーログや解決した知見を美しくストックします。</p>
+        </div>
+
+        <button 
+          type="submit"
+          className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-lg font-semibold text-xs tracking-wide transition-colors shadow-sm whitespace-nowrap"
+        >
+          {post ? "保存" : "作成"}
+        </button>
       </div>
       
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
         
         {/* --- 左側：エディタエリア --- */}
         <div className="flex flex-col space-y-4 lg:h-[calc(100vh-220px)] lg:min-h-[600px]">
           
-          {/* 上部コントロール群 */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/60 p-4 rounded-xl border border-slate-200/60">
+          {/* 上部コントロール群（ボタンを抜いたため、シンプルな幅に自動調整されます） */}
+          <div className="bg-slate-50/60 p-4 rounded-xl border border-slate-200/60">
             <div className="w-full sm:max-w-xs space-y-1.5">
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Language</label>
               <div className="flex gap-2">
@@ -152,16 +170,27 @@ npm run dev
                 >
                   ＋ 追加
                 </button>
+                <div
+                  className={`
+                    relative text-xs font-bold px-3 py-2 rounded-full border transition-colors duration-200 flex items-center justify-center shrink-0
+                    ${isResolved 
+                      ? 'bg-emerald-50 text-emerald-600 border-emerald-200/60 hover:bg-emerald-100/80' 
+                      : 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100/80'
+                    }
+                  `}
+                >
+                  <select 
+                    value={status} 
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="bg-transparent cursor-pointer appearance-none outline-none w-full h-full text-center pr-3 font-sans text-xs font-bold"
+                    style={{ color: 'inherit' }}
+                  >
+                    <option value="UNRESOLVED" className="text-slate-800 bg-white">未解決</option>
+                    <option value="RESOLVED" className="text-slate-800 bg-white">解決</option>
+                  </select>
+                  <span className="absolute right-2 pointer-events-none text-[8px] opacity-70">▼</span>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex sm:self-end w-full sm:w-auto">
-              <button 
-                type="submit"
-                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg font-semibold text-xs tracking-wide transition-colors shadow-sm"
-              >
-                {post ? "変更を保存" : "投稿を作成"}
-              </button>
             </div>
           </div>
 
@@ -198,13 +227,12 @@ npm run dev
           </div>
         </div>
 
-        {/* --- 右側：リアルタイムプレビューエリア（スクロールバグ修正版） --- */}
+        {/* --- 右側：リアルタイムプレビューエリア --- */}
         <div className="hidden lg:flex flex-col lg:h-[calc(100vh-220px)] lg:min-h-[600px] bg-slate-50/40 border border-slate-100 rounded-xl p-5 min-w-0 overflow-hidden">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3 shrink-0">
             Real-time Preview
           </div>
           
-          {/* 白カード自体を flex-1 で下に伸ばし、overflow-y-auto でここをスクロールさせる */}
           <div className="flex-1 bg-white rounded-xl p-6 border border-slate-200/60 shadow-sm flex flex-col w-full min-w-0 overflow-y-auto">
             <h1 className="text-lg font-bold text-slate-800 mb-4 whitespace-pre-wrap break-all leading-snug shrink-0">
               {title || <span className="text-slate-300 italic font-normal">タイトル未入力</span>}
@@ -215,7 +243,7 @@ npm run dev
           </div>
         </div>
 
-      </form>
+      </div>
 
       {/* モーダルウィンドウ */}
       {isModalOpen && (
@@ -256,6 +284,6 @@ npm run dev
           </div>
         </div>
       )}
-    </div>
+    </form>
   );
 }
