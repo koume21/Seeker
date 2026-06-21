@@ -3,14 +3,17 @@ import React from 'react';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { getPosts } from './_lib';
+import { StatusSelect } from '../components/StatusSelect';
+import {searchPosts} from './_action';
+
 
 interface PageProps {
-  searchParams: Promise<{ lang?: string }>
+  searchParams: Promise<{ lang?: string;search?: string }>
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
-  const { lang } = await searchParams;
-  const posts = await getPosts(lang);
+  const { lang,search } = await searchParams;
+  const posts = await getPosts(lang,search);
   const session = await auth();
   
   if (!session?.user?.id) return null; 
@@ -32,9 +35,20 @@ export default async function HomePage({ searchParams }: PageProps) {
               </span>
             )}
           </div>
-          <p className="text-xs md:text-sm text-slate-400 mt-1.5 font-medium">
-            コミュニティに蓄積された最新のバグレポートと知見
-          </p>
+        </div>
+        <div>
+          {posts ? 
+            <form action={searchPosts} className="flex gap-2">
+              <input type="text" name="query" className="border p-2 rounded" placeholder="検索ワードを入力"/>
+              <button 
+                type="submit"
+                className="bg-blue-500 text-white p-2 rounded"
+              >
+                検索
+              </button>
+            </form>
+          : 
+          ""}
         </div>
       </div>
 
@@ -43,48 +57,50 @@ export default async function HomePage({ searchParams }: PageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {posts.map((post) => (
             <article 
-              key={post.id} 
-              className="p-5 bg-slate-50/60 hover:bg-white border border-slate-200/60 hover:border-indigo-200 hover:shadow-sm transition-all duration-200 ease-out rounded-xl flex flex-col justify-between group"
-            >
-              <div>
-                {/* タイトル：ホバー時にIndigoに変わる、控えめで綺麗な変化 */}
-                <h3 className="font-bold text-base text-slate-800 group-hover:text-indigo-600 transition-colors duration-150 line-clamp-1">
-                  {post.title}
-                </h3>
-                {/* コンテンツ */}
-                <p className="text-slate-500 group-hover:text-slate-600 text-xs md:text-sm mt-2 line-clamp-2 leading-relaxed transition-colors duration-150">
-                  {post.content}
-                </p>
-              </div>
+                key={post.id} 
+                className="p-5 bg-slate-50/60 hover:bg-white border border-slate-200/60 hover:border-indigo-200 hover:shadow-sm transition-all duration-200 ease-out rounded-xl flex flex-col justify-between group"
+                >
+                <div>
+                    {/* タイトルと進捗セレクトを横並び＆右上配置に */}
+                    <div className="flex justify-between items-start gap-4">
+                    {/* タイトル */}
+                    <h3 className="font-bold text-base text-slate-800 group-hover:text-indigo-600 transition-colors duration-150 line-clamp-1 flex-1">
+                        {post.title}
+                    </h3>
+                    <StatusSelect postId={post.id} initialStatus={post.status} />
+                    </div>
 
-              {/* --- カードフッター --- */}
-              <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                {/* プレーンなメタデータラベル */}
-                <span className="font-mono text-[10px] tracking-wider text-slate-400 uppercase">
-                  log_entry
-                </span>
-                
-                {/* 右側ボタン：余計な線を減らし、フォントの太さと色でモダンに区別 */}
-                <div className="flex items-center gap-4">
-                  <Link 
-                    href={`/main/new_post?edit=${post.id}`}
-                    className="font-medium text-slate-400 hover:text-slate-700 cursor-pointer transition-colors"
-                  >
-                    編集
-                  </Link>
-                  
-                  <Link 
-                    href={`/main/display/${post.id}`}
-                    className="font-semibold text-indigo-600 hover:text-indigo-500 flex items-center gap-0.5"
-                  >
-                    <span>表示</span>
-                    {/* 矢印をさらに細くシンプルにし、右上に抜けるミニマルなアイコンへ（これもトレンドです） */}
-                    <svg className="w-3 h-3 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7-7 7" />
-                    </svg>
-                  </Link>
+                    {/* コンテンツ */}
+                    <p className="text-slate-500 group-hover:text-slate-600 text-xs md:text-sm mt-3 line-clamp-2 leading-relaxed transition-colors duration-150">
+                    {post.content}
+                    </p>
                 </div>
-              </div>
+
+                {/* --- カードフッター --- */}
+                <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                    <span className="font-mono text-[10px] tracking-wider text-slate-400 uppercase">
+                    log_entry
+                    </span>
+                    
+                    <div className="flex items-center gap-4">
+                    <Link 
+                        href={`/main/new_post?edit=${post.id}`}
+                        className="font-medium text-slate-400 hover:text-slate-700 cursor-pointer transition-colors"
+                    >
+                        編集
+                    </Link>
+                    
+                    <Link 
+                        href={`/main/display/${post.id}`}
+                        className="font-semibold text-indigo-600 hover:text-indigo-500 flex items-center gap-0.5"
+                    >
+                        <span>表示</span>
+                        <svg className="w-3 h-3 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7-7 7" />
+                        </svg>
+                    </Link>
+                    </div>
+                </div>
             </article>
           ))}
         </div>
