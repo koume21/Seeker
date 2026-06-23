@@ -14,7 +14,6 @@ export async function Delete(post:number,formData:FormData) {
     } catch (error) {
         console.error(error);
         deleteSuccess = false;
-        console.log(deleteSuccess);
     }
     if (deleteSuccess) {
         redirect('/main/home');

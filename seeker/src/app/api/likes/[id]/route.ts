@@ -17,8 +17,6 @@ export async function POST(
         const body = await request.json();
         const {isLike,postId} = body;
         const post_id = parseInt(postId);
-        console.log("受け取ったisLike:", isLike); // true または false
-        console.log("受け取ったpostId:", postId);
 
         if (isNaN(post_id)) {
             return NextResponse.json({ error: "不正な投稿IDです" }, { status: 400 });
@@ -54,8 +52,6 @@ export async function DELETE(
         }
         const body = await request.json();
         const {isLike,postId} = body;
-        console.log("受け取ったisLike:", isLike); // true または false
-        console.log("受け取ったpostId:", postId);
         const post_id = parseInt(postId);
         if (isNaN(post_id)) {
             return NextResponse.json({ error: "不正な投稿IDです" }, { status: 400 });
