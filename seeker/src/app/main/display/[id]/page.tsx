@@ -78,7 +78,7 @@ export default async function DispalayHome({ params }: PageProps) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 md:py-16">
+    <div className="w-full max-w-7xl mx-auto px-6 py-12 md:py-16">
       {/* メインカード */}
       <article className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-6 md:p-8">
         
