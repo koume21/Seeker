@@ -9,7 +9,6 @@ export default async function CodeBlock({code,lang}:CodeBlockProps) {
             theme:'vitesse-dark'
         }
     )
-    console.log(html)
      return(
         <div dangerouslySetInnerHTML={{__html:html }}/>
     );
