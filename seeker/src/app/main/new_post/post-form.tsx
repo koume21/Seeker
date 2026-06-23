@@ -96,7 +96,6 @@ npm run dev
     const parts = text.split(/(`{3}[\s\S]*?`{3})/g);
     const found = languages.find(item=>item.id===selectedLanguageId)
     const lang_Name = found?.name ?? "";
-    console.log(lang_Name);
     return parts.map((part, index) => {
       if (part.startsWith("```") && part.endsWith("```")) {
         const codeContent = part.slice(3, -3).trim();
@@ -128,7 +127,7 @@ npm run dev
   const isResolved = status.toUpperCase() === 'RESOLVED' || status === '解決';
   // 公開・非公開
 
-  console.log(isPublished);
+
   return (
     <form onSubmit={handleSubmit} className="pt-4 py-10 max-w-[1400px] mx-auto w-full">
       

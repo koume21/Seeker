@@ -3,9 +3,6 @@ import { prisma } from "@/lib/prisma";
 export default async function Setting() {
     const session = await auth();
     const provider = (session?.user as any)?.provider;
-    console.log('--------------------');
-    console.log (provider);
-    console.log('--------------------');
     return(
         <div className="flex min-h-[70vh] flex-col items-center justify-center p-6 text-center bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px]">
             <div className="p-6 bg-white border border-slate-200/80 rounded-xl shadow-sm max-w-sm w-full">

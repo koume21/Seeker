@@ -10,7 +10,6 @@ interface LikePageProps {
 export default function LikePage({postId,isLike}:LikePageProps) {
     const [isLiked,setIsLiked] = useState(isLike);
     const [isUpdating, setIsUpdating] = useState(false);
-    console.log(isLike)
 
     const handleChange = async() => {
         setIsLiked(!isLiked);

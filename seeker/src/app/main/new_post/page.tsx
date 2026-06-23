@@ -34,7 +34,6 @@ export default async function NewPostPage({searchParams} : PageProps) {
         try {
             // 2. postの有無で処理を分岐
             if (id) {
-                console.log("既存の投稿を更新します。ID:", id);
                 try {
                     await prisma.post.update({
                         where: {
@@ -65,7 +64,6 @@ export default async function NewPostPage({searchParams} : PageProps) {
                             isPublished:isPublished,
                         },
                     });
-                    console.log("DB保存成功:",newPost);
                     isSuccess = true;
                 } catch(error) {
                     console.error("DB保存中にエラーが発生しました：",error);
