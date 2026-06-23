@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getPosts } from './_lib';
 import { StatusSelect } from '../components/StatusSelect';
 import {searchPosts} from './_action';
+import LikePage from '../components/like_button';
 
 
 interface PageProps {
@@ -15,9 +16,26 @@ export default async function HomePage({ searchParams }: PageProps) {
   const { lang,search } = await searchParams;
   const posts = await getPosts(lang,search);
   const session = await auth();
-  
-  if (!session?.user?.id) 
-    return []; 
+
+  const userId = session?.user?.id;
+  if (!userId) return []
+  // const posts = await prisma.post.findMany({
+  //   where: {
+  //     getPosts(lang,search)
+  //   },
+  //   include: {
+  //   likes: {
+  //     where: {
+  //       userId: userId, // 💡 直前でチェックしているので、ここはそのまま userId でOK
+  //     },
+  //   },
+  // },
+  //});
+  const postsWithLikeStatus = posts.map(post => ({
+    ...post,
+    // @ts-ignore
+    isLiked: post.likes ? post.likes.length > 0:false,
+  }));
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
@@ -38,7 +56,7 @@ export default async function HomePage({ searchParams }: PageProps) {
           </div>
         </div>
         <div>
-          {posts ? 
+          {postsWithLikeStatus ? 
             <form action={searchPosts} className="flex gap-2">
               <input type="text" name="query" className="border p-2 rounded" placeholder="検索ワードを入力"/>
               <button 
@@ -54,9 +72,10 @@ export default async function HomePage({ searchParams }: PageProps) {
       </div>
 
       {/* --- 投稿リスト：背景のトーンをわずかに変化させるモダン・グリッド --- */}
-      {posts.length > 0 ? (
+      {postsWithLikeStatus.length > 0 ? (
         <div className="grid grid-cols-1 gap-7 w-full max-w-none">
-          {posts.map((post) => (
+          {postsWithLikeStatus.map((post) => (
+
             <article 
                 key={post.id} 
                 className="p-5 bg-slate-50/60 hover:bg-white border border-slate-200/60 hover:border-indigo-200 hover:shadow-sm transition-all duration-200 ease-out rounded-xl flex flex-col justify-between group"
@@ -79,9 +98,7 @@ export default async function HomePage({ searchParams }: PageProps) {
 
                 {/* --- カードフッター --- */}
                 <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-mono text-[10px] tracking-wider text-slate-400 uppercase">
-                    log_entry
-                    </span>
+                    <LikePage postId={post.id} isLike={post.isLiked}/>
                     
                     <div className="flex items-center gap-4">
                     <Link 

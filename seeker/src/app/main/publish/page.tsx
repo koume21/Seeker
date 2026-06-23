@@ -4,6 +4,7 @@ import {searchPosts} from './_action';
 import Link from 'next/link';
 import { auth } from "@/auth"
 import { getPosts } from './_lib';
+import LikePage from '../components/like_button';
 
 interface PageProps {
   searchParams: Promise<{ search?: string }>
@@ -17,7 +18,11 @@ export default async function PublishPage({ searchParams }: PageProps) {
     const { search } = await searchParams;
     // 公開ポストの抽出と公開の検索結果の抽出
     const publish_post = await getPosts(search);
-    
+    const postsWithLikeStatus = publish_post.map(post => ({
+        ...post,
+        // @ts-ignore
+        isLiked: post.likes ? post.likes.length > 0:false,
+    }));
 
 
     return (
@@ -27,7 +32,7 @@ export default async function PublishPage({ searchParams }: PageProps) {
         <div>
         </div>
         <div>
-          {publish_post ? 
+          {postsWithLikeStatus ? 
             <form action={searchPosts} className="flex gap-2">
               <input type="text" name="query" className="border p-2 rounded" placeholder="検索ワードを入力"/>
               <button 
@@ -43,9 +48,9 @@ export default async function PublishPage({ searchParams }: PageProps) {
       </div>
 
       {/* --- 投稿リスト：背景のトーンをわずかに変化させるモダン・グリッド --- */}
-      {publish_post.length > 0 ? (
+      {postsWithLikeStatus.length > 0 ? (
         <div className="grid grid-cols-1 gap-7 w-full max-w-none">
-          {publish_post.map((post) => (
+          {postsWithLikeStatus.map((post) => (
             <article 
                 key={post.id} 
                 className="p-5 bg-slate-50/60 hover:bg-white border border-slate-200/60 hover:border-indigo-200 hover:shadow-sm transition-all duration-200 ease-out rounded-xl flex flex-col justify-between group"
@@ -68,9 +73,7 @@ export default async function PublishPage({ searchParams }: PageProps) {
 
                 {/* --- カードフッター --- */}
                 <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <span className="font-mono text-[10px] tracking-wider text-slate-400 uppercase">
-                    log_entry
-                    </span>
+                    <LikePage postId={post.id} isLike={post.isLiked}/>
                     
                     <div className="flex items-center gap-4">
                         { post.userId === session?.user?.id ? 
