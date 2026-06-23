@@ -50,6 +50,8 @@ model User {
   accounts      Account[]
   sessions      Session[]
   posts         Post[]
+  comments      Comment[]
+  likes         Like[]
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
 }
@@ -76,14 +78,45 @@ model Post {
   programming_code String? @db.Text
   status           String  @default("published")
 
-  // リレーション用ID
   userId     String // User.idに合わせてString型に
   languageId Int
 
-  // リレーション定義
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   language Language @relation(fields: [languageId], references: [id])
 
+  isPublished Boolean @default(false)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+
+  comments Comment[]
+  likes    Like[]
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  content    String
+  userId     String
+  postId     Int
+  parentId   Int?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentToComment", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentToComment")
+}
+
+model Like {
+  id         Int      @id @default(autoincrement())
+  userId     String
+  postId     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
 }
