@@ -6,6 +6,7 @@ import { Delete } from './_action';
 import { FaComment } from "react-icons/fa";
 import { Trash2 } from 'lucide-react';
 import DeleteButton from "./delete_button";
+import { revalidatePath } from "next/cache";
 
 interface PageProps {
     searchParams: Promise<{ edit?:string }>;
@@ -74,6 +75,7 @@ export default async function NewPostPage({searchParams} : PageProps) {
             console.error("送信エラー:", error);
         }
         if (isSuccess) {
+            revalidatePath("/main", "layout");
             redirect("/main/home");
         }
     }
