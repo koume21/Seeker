@@ -48,25 +48,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
       }
-      // 最初（ログイン時）に有効期限が設定されていない、または新しく設定する場合
-      if (!token.exp_time) {
-        // 現在時刻から30秒後のタイムスタンプを独自に保存
-        token.exp_time = Math.floor(Date.now() / 1000) + 30 * 60;
-      }
       return token;
     },
     async session({ session, token }) {
-      // 💡【ここに書く！】セッションが呼ばれるたびに時間チェックを実行
-      const now = Math.floor(Date.now() / 1000);
-      
-      if (token.exp_time && now > (token.exp_time as number)) {
-        // 30分を過ぎていたら、空のオブジェクトを返して「未ログイン」状態にする
-        console.log("セッションの有効期限が切れたため、ログアウトします");
-        if (session.user) {
-          delete (session as any).user; // userオブジェクトを完全に削除して未ログイン状態にする
-        }
-        return session;
-      }
 
       // 期限内であれば、通常通りセッションにデータを詰める
       if (session.user) {
