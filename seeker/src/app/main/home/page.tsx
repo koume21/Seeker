@@ -4,131 +4,138 @@ import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { getPosts } from './_lib';
 import { StatusSelect } from '../components/StatusSelect';
-import {searchPosts} from './_action';
+import { searchPosts } from './_action';
 import LikePage from '../components/like_button';
-
+import { TagIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 interface PageProps {
-  searchParams: Promise<{ lang?: string;search?: string }>
+  searchParams: Promise<{ lang?: string; search?: string }>
 }
 
 export default async function HomePage({ searchParams }: PageProps) {
-  const { lang,search } = await searchParams;
-  const posts = await getPosts(lang,search);
+  const { lang, search } = await searchParams;
+  const posts = await getPosts(lang, search);
   const session = await auth();
 
   const userId = session?.user?.id;
-  if (!userId) return []
-  // const posts = await prisma.post.findMany({
-  //   where: {
-  //     getPosts(lang,search)
-  //   },
-  //   include: {
-  //   likes: {
-  //     where: {
-  //       userId: userId, // 💡 直前でチェックしているので、ここはそのまま userId でOK
-  //     },
-  //   },
-  // },
-  //});
+  if (!userId) return [];
+
   const postsWithLikeStatus = posts.map(post => ({
     ...post,
     // @ts-ignore
-    isLiked: post.likes ? post.likes.length > 0:false,
+    isLiked: post.likes ? post.likes.length > 0 : false,
+    // @ts-ignore
+    likeCount: post.likes ? post.likes.length : 0 // いいね数を表示するために追加
   }));
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-12 md:py-16">
-      {/* --- ヘッダー：あえて大きな線を排し、洗練されたタイポグラフィと配置で魅せる --- */}
-      <div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-slate-100 pb-6">
+    <div className="max-w-[1400px] mx-auto px-6 py-2 w-full">
+      {/* --- ヘッダー：境界線を無くし、位置関係を右画像に調整 --- */}
+      <div className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
-              {lang ? `${lang} の投稿一覧` : "すべての投稿"}
-            </h2>
-            
-            {/* 言語バッジ：枠線をなくし、背景色と文字のコントラストを柔らかくした現代的なスタイル */}
-            {lang && (
-              <span className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-semibold text-indigo-600 tracking-wide">
-                {lang.toLowerCase()}
-              </span>
-            )}
-          </div>
+          <h2 className="text-sm font-bold text-gray-900 tracking-tight">
+            {lang ? `${lang} の投稿` : "すべての投稿"}
+          </h2>
         </div>
+        
+        {/* 検索フォームのコンパクト化と位置調整 */}
         <div>
-          {postsWithLikeStatus ? 
-            <form action={searchPosts} className="flex gap-2">
-              <input type="text" name="query" className="border p-2 rounded" placeholder="検索ワードを入力"/>
+          {postsWithLikeStatus && (
+            <form action={searchPosts} className="flex gap-1">
+              <input 
+                type="text" 
+                name="query" 
+                className="bg-[#f3f4f6] border border-gray-200 px-3 py-1 rounded-md text-[11px] w-64 focus:outline-none focus:border-blue-500 text-gray-700 placeholder-gray-400" 
+                placeholder="検索ワードを入力"
+              />
               <button 
                 type="submit"
-                className="bg-blue-500 text-white p-2 rounded"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-3 py-1 rounded-md transition-colors"
               >
                 検索
               </button>
             </form>
-          : 
-          ""}
+          )}
         </div>
       </div>
 
-      {/* --- 投稿リスト：背景のトーンをわずかに変化させるモダン・グリッド --- */}
+      {/* --- 投稿リスト：シャープかつコンパクトに凝縮 --- */}
       {postsWithLikeStatus.length > 0 ? (
-        <div className="grid grid-cols-1 gap-7 w-full max-w-none">
-          {postsWithLikeStatus.map((post) => (
+        <div className="space-y-4 w-full">
+          {postsWithLikeStatus.map((post) => {
+            const formattedDate = post.created_at 
+              ? new Date(post.created_at).toISOString().split('T')[0] 
+              : "2025-06-20";
 
-            <article 
+            return (
+              <article 
                 key={post.id} 
-                className="p-5 bg-slate-50/60 hover:bg-white border border-slate-200/60 hover:border-indigo-200 hover:shadow-sm transition-all duration-200 ease-out rounded-xl flex flex-col justify-between group"
-                >
+                className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col justify-between"
+              >
                 <div>
-                    {/* タイトルと進捗セレクトを横並び＆右上配置に */}
-                    <div className="flex justify-between items-start gap-4">
-                    {/* タイトル */}
-                    <h3 className="font-bold text-base text-slate-800 group-hover:text-indigo-600 transition-colors duration-150 line-clamp-1 flex-1">
-                        {post.title}
+                  {/* カテゴリタグ & 日付 */}
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-1 font-medium">
+                    <span className="flex items-center gap-1 text-blue-600 font-semibold">
+                      <TagIcon className="w-3.5 h-3.5" />
+                      {/* @ts-ignore */}
+                      {post.language?.name || lang || "Python"}
+                    </span>
+                    <span>·</span>
+                    <span>{formattedDate}</span>
+                  </div>
+
+                  {/* タイトル & 右上の解決ステータス */}
+                  <div className="flex justify-between items-center gap-4">
+                    <h3 className="font-bold text-sm text-gray-900 flex-1 line-clamp-1">
+                      {post.title}
                     </h3>
-                    <StatusSelect postId={post.id} initialStatus={post.status} user= {true} />
+                    <div className="scale-90 transform origin-right">
+                      <StatusSelect postId={post.id} initialStatus={post.status} user={true} />
                     </div>
+                  </div>
 
-                    {/* コンテンツ */}
-                    <p className="text-slate-500 group-hover:text-slate-600 text-xs md:text-sm mt-3 line-clamp-2 leading-relaxed transition-colors duration-150">
+                  {/* グレーのコードブロック：パディングを極限まで詰めて右側に完全一致 */}
+                  <div className="mt-2 bg-[#f8f9fa] border border-gray-200 rounded-lg px-3 py-2 font-mono text-[11px] text-gray-600 whitespace-pre-wrap break-all leading-normal">
                     {post.content}
-                    </p>
+                  </div>
                 </div>
 
-                {/* --- カードフッター --- */}
-                <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                {/* --- カードフッター：いいね数と編集の配置調整 --- */}
+                <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
+                  {/* いいねアイコンとカウント数を横並びに */}
+                  <div className="flex items-center gap-1 text-gray-500">
                     <LikePage postId={post.id} isLike={post.isLiked}/>
-                    
-                    <div className="flex items-center gap-4">
+                    <span className="font-medium text-[11px]">{post.likeCount || 0}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 font-medium">
+                    {/* 右の画像に合わせたアイコン付き編集ボタン */}
                     <Link 
-                        href={`/main/new_post?edit=${post.id}`}
-                        className="font-medium text-slate-400 hover:text-slate-700 cursor-pointer transition-colors"
+                      href={`/main/new_post?edit=${post.id}`}
+                      className="text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors"
                     >
-                        編集
+                      <PencilIcon className="w-3 h-3" />
+                      <span>編集</span>
                     </Link>
                     
                     <Link 
-                        href={`/main/display/${post.id}`}
-                        className="font-semibold text-indigo-600 hover:text-indigo-500 flex items-center gap-0.5"
+                      href={`/main/display/${post.id}`}
+                      className="text-blue-600 hover:text-blue-700 flex items-center gap-0.5 font-bold"
                     >
-                        <span>表示</span>
-                        <svg className="w-3 h-3 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7-7 7" />
-                        </svg>
+                      <span>表示</span>
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                      </svg>
                     </Link>
-                    </div>
+                  </div>
                 </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       ) : (
-        /* --- 空状態エリア --- */
-        <div className="text-center py-20 bg-slate-50/30 rounded-xl border border-slate-200/60">
-          <h3 className="text-sm font-semibold text-slate-700">該当する投稿がまだありません</h3>
-          <p className="mt-1 text-xs text-slate-400 max-w-xs mx-auto">
-            最初のコンテンツを投稿してみましょう。
-          </p>
+        <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+          <h3 className="text-xs font-semibold text-gray-600">該当する投稿がまだありません</h3>
         </div>
       )}
     </div>

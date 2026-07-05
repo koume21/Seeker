@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from "next/navigation";
 
 type Props = {
   postId: string | number;
@@ -11,7 +12,8 @@ type Props = {
 export function StatusSelect({ postId, initialStatus,user }: Props) {
   const [status, setStatus] = useState(initialStatus);
   const [isUpdating, setIsUpdating] = useState(false);
-
+  const router = useRouter();
+  
   const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nextStatus = e.target.value;
     setStatus(nextStatus);
@@ -26,7 +28,7 @@ export function StatusSelect({ postId, initialStatus,user }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: nextStatus }),
       });
-
+      router.refresh()
       if (!res.ok) throw new Error('更新失敗');
     } catch (error) {
       alert('ステータスの更新に失敗しました');
