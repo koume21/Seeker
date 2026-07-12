@@ -5,6 +5,7 @@ import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
 import { JWT } from "next-auth/jwt";
+import bcrypt from "bcryptjs";
 
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -21,8 +22,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email },
         });
 
-        // パスワードの照合
-        if (user && user.password === password) {
+        // パスワードの照合（ハッシュ化されたパスワードと比較）
+        if (user?.password && (await bcrypt.compare(password, user.password))) {
 
           return {
             id: String(user.id), // idは文字列を期待されることが多いので念のため変換
@@ -41,12 +42,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     // ログイン後のセッションにユーザーIDを含めるための設定
-    async jwt({ token, account, user }) {
+    async jwt({ token, account, user, trigger, session }) {
       if(account) {
         token.provider = account.provider;
       }
       if (user) {
         token.id = user.id;
+        token.name = user.name;
+      }
+      // クライアントから update() が呼ばれた場合、トークンの内容を最新化する
+      // （DBを更新しただけではJWTセッションには反映されないため）
+      if (trigger === "update" && session?.name) {
+        token.name = session.name;
       }
       return token;
     },
