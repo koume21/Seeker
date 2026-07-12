@@ -1,26 +1,54 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from "@/auth";
+import { CommentSection } from './comment-section';
 
 interface PageProps {
   params: Promise<{ id: string }>
 }
 
+const notFoundView = (
+  <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+    <h2 className="text-xl font-bold text-slate-800">投稿が見つかりませんでした</h2>
+  </div>
+);
+
 export default async function DispalayHome({ params }: PageProps) {
   const { id } = await params;
-  
+  const session = await auth();
+  const viewerId = session?.user?.id;
+
   const post = await prisma.post.findUnique({
     where: {
       id: Number(id),
     },
+    include: {
+      comments: {
+        where: { parentId: null },
+        orderBy: { created_at: 'asc' },
+        include: {
+          user: { select: { id: true, name: true, image: true } },
+          replies: {
+            orderBy: { created_at: 'asc' },
+            include: { user: { select: { id: true, name: true, image: true } } },
+          },
+        },
+      },
+    },
   });
 
   if (!post) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <h2 className="text-xl font-bold text-slate-800">投稿が見つかりませんでした</h2>
-      </div>
-    );
+    return notFoundView;
   }
+
+  // 非公開投稿は投稿者本人以外は閲覧できない
+  if (!post.isPublished && post.userId !== viewerId) {
+    return notFoundView;
+  }
+
+  const comments = post.comments.map((comment) => ({
+    ...comment,
+    replies: comment.replies.map((reply) => ({ ...reply, replies: [] })),
+  }));
 
   const lang = await prisma.language.findUnique({
     where: {
@@ -104,6 +132,17 @@ export default async function DispalayHome({ params }: PageProps) {
         </div>
 
       </article>
+
+      <CommentSection
+        postId={post.id}
+        initialComments={comments}
+        currentUser={
+          session?.user?.id
+            ? { id: session.user.id, name: session.user.name ?? null, image: session.user.image ?? null }
+            : null
+        }
+        postOwnerId={post.userId}
+      />
     </div>
   );
 }
