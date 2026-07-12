@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
+import bcrypt from "bcryptjs";
 
 // 引数から prevState を削除！
 export async function registerUser(formData: FormData) {
@@ -24,9 +25,10 @@ export async function registerUser(formData: FormData) {
       return { error: "このメールアドレスは既に登録されています。OAuthログイン（GitHubなど）をお試しください。" };
     }
 
-    // 1. データベースにユーザーを作成
+    // 1. パスワードをハッシュ化してデータベースにユーザーを作成
+    const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.create({
-      data: { name, email, password },
+      data: { name, email, password: hashedPassword },
     });
 
     // 💡 2.【重要】作成したアカウントでそのまま自動ログインを実行する
