@@ -20,7 +20,7 @@ export function MainProvider({
   userId, 
   languages, 
   children 
-}: { 
+}: {
   userId: string; 
   languages: LanguageOption[]; 
   children: React.ReactNode 
