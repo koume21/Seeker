@@ -22,11 +22,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email },
         });
 
-        // パスワードの照合（ハッシュ化されたパスワードと比較）
         if (user?.password && (await bcrypt.compare(password, user.password))) {
 
           return {
-            id: String(user.id), // idは文字列を期待されることが多いので念のため変換
+            id: String(user.id),
             name: user.name,
             email: user.email,
           };
@@ -41,7 +40,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     maxAge: 30 * 60
   },
   callbacks: {
-    // ログイン後のセッションにユーザーIDを含めるための設定
+
     async jwt({ token, account, user, trigger, session }) {
       if(account) {
         token.provider = account.provider;
@@ -51,7 +50,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.name = user.name;
       }
       // クライアントから update() が呼ばれた場合、トークンの内容を最新化する
-      // （DBを更新しただけではJWTセッションには反映されないため）
       if (trigger === "update" && session?.name) {
         token.name = session.name;
       }
