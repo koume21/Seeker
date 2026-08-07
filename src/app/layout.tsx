@@ -31,9 +31,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <SessionProvider 
           // 5分（300秒）ごとにバックエンドにセッションを確認しに行く
-          // セッションが切れていれば、自動的に status が "unauthenticated" になる
           refetchInterval={10 * 60} 
-          // ウィンドウをフォーカスしたときにもチェックする（推奨）
           refetchOnWindowFocus={true}
         >
         {children}
