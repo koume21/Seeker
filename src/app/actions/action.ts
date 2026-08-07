@@ -6,7 +6,6 @@ import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 
-// 引数から prevState を削除！
 export async function registerUser(formData: FormData) {
   const name = formData.get('name') as string;
   const email = formData.get('email') as string;
@@ -25,18 +24,15 @@ export async function registerUser(formData: FormData) {
       return { error: "このメールアドレスは既に登録されています。OAuthログイン（GitHubなど）をお試しください。" };
     }
 
-    // 1. パスワードをハッシュ化してデータベースにユーザーを作成
     const hashedPassword = await bcrypt.hash(password, 10);
     await prisma.user.create({
       data: { name, email, password: hashedPassword },
     });
 
-    // 💡 2.【重要】作成したアカウントでそのまま自動ログインを実行する
-    // これにより jwt コールバックが走り、token.exp_time が正しくセットされます
     await signIn("credentials", {
       email,
       password,
-      redirect: false, // ここでの自動リダイレクトはオフにする
+      redirect: false,
     });
 
   } catch (error) {
@@ -48,11 +44,9 @@ export async function registerUser(formData: FormData) {
     return { error: "登録処理に失敗しました。もう一度お試しください。" };
   }
 
-  // 3. セッションが確立された状態でホームへリダイレクト
   redirect('/main/home');
 }
 
-// 引数から prevState を削除！
 export async function loginAction(formData: FormData) {
   try {
     await signIn("credentials", { 

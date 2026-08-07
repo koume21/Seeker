@@ -31,10 +31,9 @@ export async function POST(
     } catch(error) {
         console.error("❌ Prismaでエラーが発生しました:", error);
 
-        // 💡 原因究明のために、エラーメッセージをそのままフロント（ブラウザ）に返してみる
         return NextResponse.json(
             { error: "DB保存エラー", details: error instanceof Error ? error.message : String(error) },
-            { status: 500 } // 400から500に変える
+            { status: 500 }
         );
     }
 }
@@ -68,7 +67,6 @@ export async function DELETE(
     } catch(error) {
         console.error("❌ Prismaでエラーが発生しました:", error);
 
-        // 💡 原因究明のために、エラーメッセージをそのままフロント（ブラウザ）に返してみる
         return NextResponse.json(
             { error: "DB保存エラー", details: error instanceof Error ? error.message : String(error) },
             { status: 500 } // 400から500に変える
