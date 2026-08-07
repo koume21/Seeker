@@ -91,6 +91,10 @@ model Post {
 
   comments Comment[]
   likes    Like[]
+
+  @@index([userId, created_at])
+  @@index([isPublished, created_at])
+  @@index([userId, status])
 }
 
 model Comment {
