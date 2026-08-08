@@ -14,19 +14,11 @@ interface PageProps {
 
 export default async function HomePage({ searchParams }: PageProps) {
   const { lang, search } = await searchParams;
-  const posts = await getPosts(lang, search);
+  const {posts, nextCursor} = await getPosts(lang, search);
   const session = await auth();
 
   const userId = session?.user?.id;
   if (!userId) return [];
-
-  const postsWithLikeStatus = posts.map(post => ({
-    ...post,
-    // @ts-ignore
-    isLiked: post.likes ? post.likes.length > 0 : false,
-    // @ts-ignore
-    likeCount: post.likes ? post.likes.length : 0 // いいね数を表示するために追加
-  }));
 
   return (
     <div className="max-w-[1400px] mx-auto px-6 py-2 w-full">
@@ -40,29 +32,27 @@ export default async function HomePage({ searchParams }: PageProps) {
         
         {/* 検索フォームのコンパクト化と位置調整 */}
         <div>
-          {postsWithLikeStatus && (
-            <form action={searchPosts} className="flex gap-1">
-              <input 
-                type="text" 
-                name="query" 
-                className="bg-[#f3f4f6] border border-gray-200 px-3 py-1 rounded-md text-[11px] w-64 focus:outline-none focus:border-blue-500 text-gray-700 placeholder-gray-400" 
-                placeholder="検索ワードを入力"
-              />
-              <button 
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-3 py-1 rounded-md transition-colors"
-              >
-                検索
-              </button>
-            </form>
-          )}
+          <form action={searchPosts} className="flex gap-1">
+            <input
+              type="text"
+              name="query"
+              className="bg-[#f3f4f6] border border-gray-200 px-3 py-1 rounded-md text-[11px] w-64 focus:outline-none focus:border-blue-500 text-gray-700 placeholder-gray-400" 
+              placeholder="検索ワードを入力"
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-3 py-1 rounded-md transition-colors"
+            >
+              検索
+            </button>
+          </form>
         </div>
       </div>
 
       {/* --- 投稿リスト：シャープかつコンパクトに凝縮 --- */}
-      {postsWithLikeStatus.length > 0 ? (
+      {posts.length > 0 ? (
         <div className="space-y-4 w-full">
-          {postsWithLikeStatus.map((post) => {
+          {posts.map((post) => {
             const formattedDate = post.created_at 
               ? new Date(post.created_at).toISOString().split('T')[0] 
               : "2025-06-20";
