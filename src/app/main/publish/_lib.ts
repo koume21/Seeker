@@ -23,9 +23,15 @@ export const getPosts = async (searchKey?: string) => {
 
     return await prisma.post.findMany({
         where: whereClause,
-        include: {
+        select: {
+            id: true,
+            title: true,
+            content: true,
+            status: true,
+            userId: true,
             likes: userId ? {
-                where: { userId:userId }
+                where: { userId: userId },
+                select: { id: true }
             } : false
         },
         orderBy: { created_at: 'desc' },
