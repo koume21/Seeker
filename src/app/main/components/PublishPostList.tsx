@@ -11,25 +11,28 @@ type Post = {
   title: string;
   content: string;
   status: string;
+  userId: string;
   created_at: Date;
   isLiked: boolean;
   likeCount: number;
 };
 
-interface HomePostListProps {
+interface PublishPostListProps {
   initialPosts: Post[];
   initialNextCursor: number | null;
-  lang?: string;
   search?: string;
+  session_user: string;
 }
 
-export function HomePostList({ initialPosts, initialNextCursor, lang, search }: HomePostListProps) {
+export function PublishPostList({ initialPosts, initialNextCursor, search, session_user }: PublishPostListProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts); //Post配列
   const [nextCursor, setNextCursor] = useState<number | null>(initialNextCursor); //cursor数値
   const [hasMore, setHasMore] = useState<boolean>(initialNextCursor !== null);  //cursorが存在判定
   const [isLoading, setIsLoading] = useState(false); //loadingの可否
-  const sentinelRef = useRef<HTMLDivElement>(null); //
+  const sentinelRef = useRef<HTMLDivElement>(null); // 画面下の判定要素
   const isLoadingRef = useRef(false);
+  const session_user_id = session_user;
+
 
   const loadMore = async () => {
     if (isLoadingRef.current || !hasMore || nextCursor === null) return;
@@ -37,11 +40,10 @@ export function HomePostList({ initialPosts, initialNextCursor, lang, search }: 
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (lang) params.set('lang', lang);
       if (search) params.set('search', search);
       params.set('cursor', String(nextCursor));
 
-      const res = await fetch(`/api/posts/home?${params.toString()}`);
+      const res = await fetch(`/api/posts/publish?${params.toString()}`);
       if (!res.ok) throw new Error('追加読み込みに失敗しました');
       const data = await res.json();
 
@@ -99,7 +101,7 @@ export function HomePostList({ initialPosts, initialNextCursor, lang, search }: 
               <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-1 font-medium">
                 <span className="flex items-center gap-1 text-blue-600 font-semibold">
                   <TagIcon className="w-3.5 h-3.5" />
-                  {lang || lang}
+                  python
                 </span>
                 <span>·</span>
                 <span>{formattedDate}</span>
@@ -120,31 +122,28 @@ export function HomePostList({ initialPosts, initialNextCursor, lang, search }: 
             </div>
 
 
-            <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
-              <div className="flex items-center gap-1 text-gray-500">
-                <LikePage postId={post.id} isLike={post.isLiked} />
-                <span className="font-medium text-[11px]">{post.likeCount || 0}</span>
-              </div>
-
-              <div className="flex items-center gap-3 font-medium">
-                <Link
-                  href={`/main/new_post?edit=${post.id}`}
-                  className="text-gray-400 hover:text-gray-600 flex items-center gap-1 transition-colors"
-                >
-                  <PencilIcon className="w-3 h-3" />
-                  <span>編集</span>
-                </Link>
-
-                <Link
-                  href={`/main/display/${post.id}`}
-                  className="text-blue-600 hover:text-blue-700 flex items-center gap-0.5 font-bold"
-                >
-                  <span>表示</span>
-                  <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
+            <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+                    <LikePage postId={post.id} isLike={post.isLiked}/>
+                    
+                    <div className="flex items-center gap-4">
+                        { post.userId === session_user_id &&
+                            <Link 
+                                href={`/main/new_post?edit=${post.id}`}
+                                className="font-medium text-slate-400 hover:text-slate-700 cursor-pointer transition-colors"
+                                >
+                                編集
+                            </Link>
+                        }
+                        <Link 
+                            href={`/main/display/${post.id}`}
+                            className="font-semibold text-indigo-600 hover:text-indigo-500 flex items-center gap-0.5"
+                        >
+                            <span>表示</span>
+                            <svg className="w-3 h-3 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7-7 7" />
+                            </svg>
+                        </Link>
+                    </div>
             </div>
           </article>
         );
