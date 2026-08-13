@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
+import { Prisma } from '@prisma/client';
 
 // 一度の表示ポスト数
 const PAGE_SIZE = 10;
@@ -27,13 +28,24 @@ export const getPosts = async ( language_name?: string,search_contents?: string,
     }
     if (search_contents && search_contents.trim()) {
         const words = search_contents.replace(/\s+/g, ' ').trim().split(' ');
-        
-        whereClause.AND = words.map((word) => ({
-            OR: [
-                { title: { contains: word, mode: 'insensitive' } },
-                { content: { contains: word, mode: 'insensitive' } },
-            ],
-        }));
+        const wordConditions = Prisma.join(
+            words.map((word) => Prisma.sql`(title ILIKE ${'%' + word + '%'} OR content ILIKE ${'%' + word + '%'})`),
+            ' AND '
+        );
+
+        const matched = await prisma.$queryRaw<{ id: number }[]>`
+            SELECT id FROM "Post"
+            WHERE "userId" = ${userId}
+              AND (
+                "search_vector" @@ websearch_to_tsquery('simple', ${search_contents})
+                OR (${wordConditions})
+              )
+        `;
+
+        if (matched.length === 0) {
+            return { posts: [], nextCursor: null };
+        }
+        whereClause.id = { in: matched.map((row) => row.id) };
     }
 
     const search_posts = await prisma.post.findMany({
