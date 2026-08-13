@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
+import { Prisma } from '@prisma/client';
 
 // 一度の表示ポスト数
 const PAGE_SIZE = 10;
@@ -15,15 +16,26 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
     };
     if (search_contents && search_contents.trim()) {
         const words = search_contents.replace(/\s+/g, ' ').trim().split(' ');
-        
-        whereClause.AND = words.map((word) => ({
-            OR: [
-                { title: { contains: word, mode: 'insensitive' } },
-                { content: { contains: word, mode: 'insensitive' } },
-            ],
-        }));
-    }
+        const wordConditions = Prisma.join(
+            words.map((word) => Prisma.sql`(title ILIKE ${'%' + word + '%'} OR content ILIKE ${'%' + word + '%'})`),
+            ' AND '
+        );
+        // 全文検索では日本語を扱うためenglishではなくsimpleを使用
+        const matched = await prisma.$queryRaw<{ id: number }[]>`
+            SELECT id FROM "Post"
+            WHERE "isPublished" = true
+              AND (
+                "search_vector" @@ websearch_to_tsquery('simple', ${search_contents})
+                OR (${wordConditions})
+              )
+        `;
 
+        if (matched.length === 0) {
+            return { posts: [], nextCursor: null };
+        }
+        whereClause.id = { in: matched.map((row) => row.id) };
+
+    }
     const search_posts =  await prisma.post.findMany({
         where: whereClause,
         select: {
@@ -54,7 +66,7 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
     const posts = pageRows.map((post) => ({
         ...post,
         isLiked: post.likes ? post.likes.length > 0 : false,
-        likeCount: post.likes ? post.likes.length : 0 // いいね数を表示するために追加
+        likeCount: post.likes ? post.likes.length : 0
     }));
 
     return {posts,nextCursor}

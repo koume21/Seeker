@@ -92,6 +92,9 @@ model Post {
   comments Comment[]
   likes    Like[]
 
+  // 全文検索用の生成カラム（title:重みA, content:重みB）。Postgres側で自動更新されるため書き込み不要
+  search_vector Unsupported("tsvector")?
+
   @@index([userId, created_at])
   @@index([isPublished, created_at])
   @@index([userId, status])
