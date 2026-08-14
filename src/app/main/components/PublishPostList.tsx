@@ -31,7 +31,7 @@ export function PublishPostList({ initialPosts, initialNextCursor, search, sessi
   const [isLoading, setIsLoading] = useState(false); //loadingの可否
   const sentinelRef = useRef<HTMLDivElement>(null); // 画面下の判定要素
   const isLoadingRef = useRef(false);
-  const session_user_id = session_user;
+  const session_user_id:string = session_user;
 
 
   const loadMore = async () => {
@@ -91,6 +91,7 @@ export function PublishPostList({ initialPosts, initialNextCursor, search, sessi
         const formattedDate = post.created_at
           ? new Date(post.created_at).toISOString().split('T')[0]
           : "2025-06-20";
+        const status_user = post.userId === session_user_id;
 
         return (
           <article
@@ -112,7 +113,7 @@ export function PublishPostList({ initialPosts, initialNextCursor, search, sessi
                   {post.title}
                 </h3>
                 <div className="scale-90 transform origin-right">
-                  <StatusSelect postId={post.id} initialStatus={post.status} user={true} />
+                  <StatusSelect postId={post.id} initialStatus={post.status} user={status_user} />
                 </div>
               </div>
 
