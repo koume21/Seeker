@@ -12,6 +12,8 @@ type PostRow = {
     status: string;
     userId: string;
     created_at: Date;
+    authorName: string | null;
+    authorImage: string | null;
 };
 
 export const getPosts = async (search_contents?: string, cursor?:number) => {
@@ -36,26 +38,38 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
             ' AND '
         );
         // 全文検索では日本語を扱うためenglishではなくsimpleを使用
+        // 投稿者情報を表示するためUserテーブルをJOIN（曖昧回避のためPost列はpで修飾）
         pageRows = await prisma.$queryRaw<PostRow[]>`
-            SELECT id, title, content, status, "userId", created_at
-            FROM "Post"
-            WHERE "isPublished" = true
+            SELECT p.id, p.title, p.content, p.status, p."userId", p.created_at,
+                   u.name AS "authorName", u.image AS "authorImage"
+            FROM "Post" p
+            JOIN "User" u ON u.id = p."userId"
+            WHERE p."isPublished" = true
               AND (
-                "search_vector" @@ websearch_to_tsquery('simple', ${search_contents})
+                p."search_vector" @@ websearch_to_tsquery('simple', ${search_contents})
                 OR (${wordConditions})
               )
-              ${cursorCreatedAt ? Prisma.sql`AND (created_at, id) < (${cursorCreatedAt}, ${cursor})` : Prisma.empty}
-            ORDER BY created_at DESC, id DESC
+              ${cursorCreatedAt ? Prisma.sql`AND (p.created_at, p.id) < (${cursorCreatedAt}, ${cursor})` : Prisma.empty}
+            ORDER BY p.created_at DESC, p.id DESC
             LIMIT ${PAGE_SIZE + 1}
         `;
     } else {
-        pageRows = await prisma.post.findMany({
+        const found = await prisma.post.findMany({
             where: { isPublished: true },
-            select: { id: true, title: true, content: true, status: true, userId: true, created_at: true },
+            select: {
+                id: true, title: true, content: true, status: true, userId: true, created_at: true,
+                user: { select: { name: true, image: true } },
+            },
             orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
             take: PAGE_SIZE + 1,
             ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         });
+        // findManyのネストしたuserを生SQLパスと同じフラットな形へ正規化
+        pageRows = found.map((p) => ({
+            id: p.id, title: p.title, content: p.content, status: p.status,
+            userId: p.userId, created_at: p.created_at,
+            authorName: p.user?.name ?? null, authorImage: p.user?.image ?? null,
+        }));
     }
 
     // search_psotsが11件以上の判定
@@ -78,9 +92,16 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
     const likeCountMap = new Map(likeCounts.map((l) => [l.postId, l._count.id]));
 
     const posts = rows.map((post) => ({
-        ...post,
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        status: post.status,
+        userId: post.userId,
+        created_at: post.created_at,
         isLiked: myLikedIds.has(post.id),
         likeCount: likeCountMap.get(post.id) ?? 0,
+        // 投稿者情報（アイコン・ユーザーネーム）
+        author: { name: post.authorName, image: post.authorImage },
     }));
 
     return {posts,nextCursor}
