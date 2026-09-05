@@ -12,6 +12,7 @@ type PostRow = {
     status: string;
     userId: string;
     created_at: Date;
+    priority: string;
     authorName: string | null;
     authorImage: string | null;
 };
@@ -40,7 +41,7 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
         // 全文検索では日本語を扱うためenglishではなくsimpleを使用
         // 投稿者情報を表示するためUserテーブルをJOIN（曖昧回避のためPost列はpで修飾）
         pageRows = await prisma.$queryRaw<PostRow[]>`
-            SELECT p.id, p.title, p.content, p.status, p."userId", p.created_at,
+            SELECT p.id, p.title, p.content, p.status, p."userId", p.created_at, p.priority,
                    u.name AS "authorName", u.image AS "authorImage"
             FROM "Post" p
             JOIN "User" u ON u.id = p."userId"
@@ -57,7 +58,7 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
         const found = await prisma.post.findMany({
             where: { isPublished: true },
             select: {
-                id: true, title: true, content: true, status: true, userId: true, created_at: true,
+                id: true, title: true, content: true, status: true, userId: true, created_at: true, priority: true,
                 user: { select: { name: true, image: true } },
             },
             orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
@@ -67,7 +68,7 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
         // findManyのネストしたuserを生SQLパスと同じフラットな形へ正規化
         pageRows = found.map((p) => ({
             id: p.id, title: p.title, content: p.content, status: p.status,
-            userId: p.userId, created_at: p.created_at,
+            userId: p.userId, created_at: p.created_at, priority: p.priority,
             authorName: p.user?.name ?? null, authorImage: p.user?.image ?? null,
         }));
     }
@@ -82,14 +83,26 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
     const nextCursor = hasMore ? rows[rows.length - 1].id : null;
 
     const rowIds = rows.map((r) => r.id);
-    const [likeCounts, myLikes] = rowIds.length
+    const [likeCounts, myLikes, postLabelRows] = rowIds.length
         ? await Promise.all([
               prisma.like.groupBy({ by: ['postId'], where: { postId: { in: rowIds } }, _count: { id: true } }),
               prisma.like.findMany({ where: { userId, postId: { in: rowIds } }, select: { postId: true } }),
+              // このページ分の投稿に紐づくラベルをまとめて取得
+              prisma.postLabel.findMany({
+                  where: { postId: { in: rowIds } },
+                  select: { postId: true, label: { select: { id: true, name: true } } },
+              }),
           ])
-        : [[], []];
+        : [[], [], []];
     const myLikedIds = new Set(myLikes.map((l) => l.postId));
     const likeCountMap = new Map(likeCounts.map((l) => [l.postId, l._count.id]));
+    // postId -> ラベル配列 のマップを作成
+    const labelMap = new Map<number, { id: number; name: string }[]>();
+    for (const pl of postLabelRows) {
+        const arr = labelMap.get(pl.postId) ?? [];
+        arr.push(pl.label);
+        labelMap.set(pl.postId, arr);
+    }
 
     const posts = rows.map((post) => ({
         id: post.id,
@@ -98,10 +111,13 @@ export const getPosts = async (search_contents?: string, cursor?:number) => {
         status: post.status,
         userId: post.userId,
         created_at: post.created_at,
+        priority: post.priority,
         isLiked: myLikedIds.has(post.id),
         likeCount: likeCountMap.get(post.id) ?? 0,
         // 投稿者情報（アイコン・ユーザーネーム）
         author: { name: post.authorName, image: post.authorImage },
+        // 付与されたラベル
+        labels: labelMap.get(post.id) ?? [],
     }));
 
     return {posts,nextCursor}

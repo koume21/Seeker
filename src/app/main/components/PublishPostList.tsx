@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { StatusSelect } from './StatusSelect';
 import LikePage from './like_button';
 import { AuthorInfo } from './AuthorInfo';
+import { PostMetaRow } from './PostMeta';
 import { TagIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 type Post = {
@@ -14,9 +15,11 @@ type Post = {
   status: string;
   userId: string;
   created_at: Date;
+  priority: string;
   isLiked: boolean;
   likeCount: number;
   author: { name: string | null; image: string | null };
+  labels: { id: number; name: string }[];
 };
 
 interface PublishPostListProps {
@@ -123,6 +126,9 @@ export function PublishPostList({ initialPosts, initialNextCursor, search, sessi
                   <StatusSelect postId={post.id} initialStatus={post.status} user={status_user} />
                 </div>
               </div>
+
+              {/* 優先度バッジ＋ラベルchip */}
+              <PostMetaRow priority={post.priority} labels={post.labels} />
 
               <div className="mt-2 bg-[#f8f9fa] border border-gray-200 rounded-lg px-3 py-2 font-mono text-[11px] text-gray-600 whitespace-pre-wrap break-all leading-normal">
                 {post.content}
