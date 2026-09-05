@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { StatusSelect } from './StatusSelect';
 import LikePage from './like_button';
+import { AuthorInfo } from './AuthorInfo';
 import { TagIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 type Post = {
@@ -15,6 +16,7 @@ type Post = {
   created_at: Date;
   isLiked: boolean;
   likeCount: number;
+  author: { name: string | null; image: string | null };
 };
 
 interface PublishPostListProps {
@@ -99,6 +101,11 @@ export function PublishPostList({ initialPosts, initialNextCursor, search, sessi
             className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm flex flex-col justify-between"
           >
             <div>
+              {/* 投稿者情報（アイコン＋ユーザーネーム） */}
+              <div className="mb-2">
+                <AuthorInfo name={post.author?.name ?? null} image={post.author?.image ?? null} />
+              </div>
+
               <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mb-1 font-medium">
                 <span className="flex items-center gap-1 text-blue-600 font-semibold">
                   <TagIcon className="w-3.5 h-3.5" />
