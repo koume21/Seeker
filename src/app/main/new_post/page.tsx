@@ -18,13 +18,23 @@ export default async function NewPostPage({searchParams} : PageProps) {
     const userId = session.user.id;
 
     const { edit:postId } = await searchParams;
-    const post = postId ? await prisma.post.findUnique({where:{id:Number(postId)}}):null;
+    // 編集時は付与済みラベルも取得する
+    const post = postId
+        ? await prisma.post.findUnique({
+              where: { id: Number(postId) },
+              include: { postLabels: { select: { labelId: true } } },
+          })
+        : null;
     if (postId && (!post || post.userId !== userId)) {
-        redirect("/main/home"); 
+        redirect("/main/home");
     }
 
+    // ラベルマスタ一覧（選択肢）と、編集時の付与済みラベルID
+    const allLabels = await prisma.label.findMany({ orderBy: { id: "asc" } });
+    const initialLabelIds = post ? post.postLabels.map((pl) => pl.labelId) : [];
 
-    async function handlePublish(id: number | null,title: string, content: string, languageId:number, status:string,isPublished:boolean) {
+
+    async function handlePublish(id: number | null,title: string, content: string, languageId:number, status:string,isPublished:boolean, priority:string, labelIds:number[]) {
         "use server";
 
         if (!title.trim() || !content.trim()){
@@ -36,18 +46,25 @@ export default async function NewPostPage({searchParams} : PageProps) {
             // 2. postの有無で処理を分岐
             if (id) {
                 try {
-                    await prisma.post.update({
-                        where: {
-                            id:id,
-                        },
-                        data: {
-                            title: title,
-                            content: content,
-                            languageId: languageId,
-                            status:status,
-                            isPublished:isPublished,
-                        }
-                    });
+                    // 投稿本体の更新とラベルの張り替えを1トランザクションで実行
+                    await prisma.$transaction([
+                        prisma.post.update({
+                            where: { id: id },
+                            data: {
+                                title: title,
+                                content: content,
+                                languageId: languageId,
+                                status: status,
+                                isPublished: isPublished,
+                                priority: priority,
+                            },
+                        }),
+                        // 既存のラベル紐付けを削除して選択分を張り直す
+                        prisma.postLabel.deleteMany({ where: { postId: id } }),
+                        prisma.postLabel.createMany({
+                            data: labelIds.map((labelId) => ({ postId: id, labelId })),
+                        }),
+                    ]);
                     isSuccess = true;
                 } catch(error) {
                     console.error("DBupdate中にエラーが発生しました：",error);
@@ -55,7 +72,8 @@ export default async function NewPostPage({searchParams} : PageProps) {
                 }
             } else {
                 try {
-                    const newPost = await prisma.post.create({
+                    // 投稿作成とラベル紐付けを1トランザクションで実行
+                    await prisma.post.create({
                         data: {
                             title: title,
                             content: content,
@@ -63,6 +81,10 @@ export default async function NewPostPage({searchParams} : PageProps) {
                             languageId: languageId,
                             status:status,
                             isPublished:isPublished,
+                            priority: priority,
+                            postLabels: {
+                                create: labelIds.map((labelId) => ({ labelId })),
+                            },
                         },
                     });
                     isSuccess = true;
@@ -89,7 +111,7 @@ export default async function NewPostPage({searchParams} : PageProps) {
         )}
 
         {/* メインのフォーム */}
-        <PostForm onPublish={handlePublish} post={post} />
+        <PostForm onPublish={handlePublish} post={post} allLabels={allLabels} initialLabelIds={initialLabelIds} />
         </div>
     );
 }

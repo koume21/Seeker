@@ -6,8 +6,18 @@ import { EyeIcon, CheckIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/o
 import DeleteButton from './delete_button';
 import LikePage from '../components/like_button';
 
+// 優先度の選択肢（値は crisis/high/medium/low、表示は 緊急/高/中/低。デフォルトは中=medium）
+const PRIORITY_OPTIONS: { value: string; label: string }[] = [
+  { value: "crisis", label: "緊急" },
+  { value: "high", label: "高" },
+  { value: "medium", label: "中" },
+  { value: "low", label: "低" },
+];
+
+type LabelOption = { id: number; name: string };
+
 interface PostFormProps {
-  onPublish: (id: number | null, title: string, content: string, languageId: number, status: string, isPublished: boolean) => Promise<void>;
+  onPublish: (id: number | null, title: string, content: string, languageId: number, status: string, isPublished: boolean, priority: string, labelIds: number[]) => Promise<void>;
   onDelete?: (id: number) => Promise<void>; // 💡 削除処理用のアクション（任意で定義してください）
   post: {
     id: number;
@@ -16,12 +26,15 @@ interface PostFormProps {
     status: string;
     languageId: number;
     isPublished: boolean;
+    priority: string;
     created_at: Date;
     updated_at: Date;
   } | null;
+  allLabels: LabelOption[];      // ラベルマスタ一覧（選択肢）
+  initialLabelIds: number[];     // 編集時に付与済みのラベルID
 }
 
-export default function PostForm({ onPublish, onDelete, post }: PostFormProps) {
+export default function PostForm({ onPublish, onDelete, post, allLabels, initialLabelIds }: PostFormProps) {
   const router = useRouter();
   const [isPublished, seIsPublished] = useState<boolean>(post ? post.isPublished : false)
   const { languages: initialLanguages } = useMainData();
@@ -31,6 +44,14 @@ export default function PostForm({ onPublish, onDelete, post }: PostFormProps) {
   const [initialPublish, setinitialPublish] = useState(isPublished);
   const [newLanguageName, setNewLanguageName] = useState("");
   const [showPreview, setShowPreview] = useState<boolean>(true);
+
+  // 優先度（デフォルトは中=medium）
+  const [priority, setPriority] = useState<string>(post ? post.priority : "medium");
+  // ラベル関連の状態
+  const [labels, setLabels] = useState<LabelOption[]>(allLabels);              // マスタ一覧（+追加で増える）
+  const [selectedLabelIds, setSelectedLabelIds] = useState<number[]>(initialLabelIds); // 選択中のラベル
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
+  const [newLabelName, setNewLabelName] = useState("");
 
   const [selectedLanguageId, setSelectedLanguageId] = useState<number | null>(
     post ? post.languageId : (languages[0]?.id ?? null)
@@ -56,8 +77,41 @@ export default function PostForm({ onPublish, onDelete, post }: PostFormProps) {
     if (selectedLanguageId === null) return alert("プログラミング言語を選択してください");
     if (!status) return alert("進捗を選択してください");
     
-    await onPublish(post ? post.id : null, title, content, selectedLanguageId, status, initialPublish);
+    await onPublish(post ? post.id : null, title, content, selectedLanguageId, status, initialPublish, priority, selectedLabelIds);
     setPublishWindow(false);
+  };
+
+  // ラベルチップの選択トグル
+  const toggleLabel = (labelId: number) => {
+    setSelectedLabelIds((prev) =>
+      prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId]
+    );
+  };
+
+  // 新しいラベルをマスタに追加（言語追加と同じ仕組み）し、追加後は選択状態にする
+  const handleAddLabel = async () => {
+    if (!newLabelName.trim()) return alert("ラベル名を入力してください");
+    try {
+      const res = await fetch('/api/labels', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newLabelName.trim() })
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "追加に失敗しました");
+      }
+      const newLabel: LabelOption = await res.json();
+
+      // 既存になければ一覧へ追加し、選択状態にする
+      setLabels((prev) => (prev.some((l) => l.id === newLabel.id) ? prev : [...prev, newLabel]));
+      setSelectedLabelIds((prev) => (prev.includes(newLabel.id) ? prev : [...prev, newLabel.id]));
+      setNewLabelName("");
+      setIsLabelModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "ラベルの追加に失敗しました");
+    }
   };
 
 
@@ -224,6 +278,61 @@ export default function PostForm({ onPublish, onDelete, post }: PostFormProps) {
         </div>
       </div>
 
+      {/* --- 2.5 優先度 & ラベル --- */}
+      <div className="mb-4 flex flex-col gap-2.5 text-[11px]">
+        {/* 優先度：緊急/高/中/低から単一選択（デフォルト中） */}
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 font-medium w-10 shrink-0">優先度</span>
+          <div className="flex items-center gap-1">
+            {PRIORITY_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPriority(opt.value)}
+                className={`px-2.5 py-0.5 rounded-full border text-[10px] font-bold transition-colors ${
+                  priority === opt.value
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ラベル：複数選択可（任意）。＋追加でマスタに登録し選択状態にする */}
+        <div className="flex items-start gap-2">
+          <span className="text-gray-400 font-medium w-10 shrink-0 pt-0.5">ラベル</span>
+          <div className="flex items-center flex-wrap gap-1">
+            {labels.map((label) => {
+              const selected = selectedLabelIds.includes(label.id);
+              return (
+                <button
+                  key={label.id}
+                  type="button"
+                  onClick={() => toggleLabel(label.id)}
+                  className={`px-2.5 py-0.5 rounded-full border text-[10px] font-medium transition-colors ${
+                    selected
+                      ? 'bg-indigo-50 text-indigo-600 border-indigo-300'
+                      : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  {selected ? '✓ ' : ''}{label.name}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setIsLabelModalOpen(true)}
+              className="px-2 py-0.5 border border-dashed border-gray-300 hover:border-gray-400 text-gray-500 bg-white rounded-full text-[10px] font-medium transition-colors"
+            >
+              ＋ 追加
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* --- 3. メインレイアウトグリッド --- */}
       <div className={`grid grid-cols-1 gap-5 items-stretch ${showPreview ? 'lg:grid-cols-2' : 'lg:grid-cols-1'}`}>
         
@@ -321,6 +430,28 @@ export default function PostForm({ onPublish, onDelete, post }: PostFormProps) {
             <div className="flex justify-end gap-2 mt-3">
               <button type="button" onClick={() => { setIsModalOpen(false); setNewLanguageName(""); }} className="px-2.5 py-1 text-xs text-gray-500">キャンセル</button>
               <button type="button" onClick={handleAddLanguage} className="px-3 py-1 text-xs text-white bg-blue-500 rounded">追加</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ラベル追加モーダル */}
+      {isLabelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/20 backdrop-blur-sm">
+          <div className="bg-white rounded-xl border border-gray-200 p-6 w-full max-w-sm mx-4">
+            <h3 className="text-xs font-bold text-gray-800 mb-3">新しいラベルを追加</h3>
+            <input
+              type="text"
+              value={newLabelName}
+              onChange={(e) => setNewLabelName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddLabel(); } }}
+              placeholder="例: バグ"
+              className="w-full px-3 py-1.5 border border-gray-200 rounded text-xs bg-white focus:outline-none"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2 mt-3">
+              <button type="button" onClick={() => { setIsLabelModalOpen(false); setNewLabelName(""); }} className="px-2.5 py-1 text-xs text-gray-500">キャンセル</button>
+              <button type="button" onClick={handleAddLabel} className="px-3 py-1 text-xs text-white bg-blue-500 rounded">追加</button>
             </div>
           </div>
         </div>
