@@ -71,12 +71,11 @@ model Language {
 }
 
 model Post {
-  id               Int     @id @default(autoincrement())
-  title            String
-  content          String  @db.Text
-  error_message    String? @db.Text
-  programming_code String? @db.Text
-  status           String  @default("published")
+  id       Int    @id @default(autoincrement())
+  title    String
+  content  String @db.Text
+  priority String @default("medium")
+  status   String @default("published")
 
   userId     String // User.idに合わせてString型に
   languageId Int
@@ -94,6 +93,7 @@ model Post {
 
   // 全文検索用の生成カラム（title:重みA, content:重みB）。Postgres側で自動更新されるため書き込み不要
   search_vector Unsupported("tsvector")?
+  postLabels    PostLabel[]
 
   @@index([userId, created_at])
   @@index([isPublished, created_at])
@@ -126,4 +126,21 @@ model Like {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+}
+
+model Label {
+  id    Int         @id @default(autoincrement())
+  name  String
+  posts PostLabel[]
+}
+
+model PostLabel {
+  id      Int   @id @default(autoincrement())
+  postId  Int
+  labelId Int
+  post    Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  label   Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([labelId])
 }
