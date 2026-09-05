@@ -129,8 +129,7 @@ export function HomePostList({ initialPosts, initialNextCursor, lang, search }: 
 
             <div className="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
               <div className="flex items-center gap-1 text-gray-500">
-                <LikePage postId={post.id} isLike={post.isLiked} />
-                <span className="font-medium text-[11px]">{post.likeCount || 0}</span>
+                <LikePage postId={post.id} isLike={post.isLiked} likeCount={post.likeCount} />
               </div>
 
               <div className="flex items-center gap-3 font-medium">
