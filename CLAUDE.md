@@ -9,11 +9,14 @@ Seeker: a Next.js app where users log programming errors and their fixes as post
 ## Commands
 
 ```bash
-npm run dev      # start dev server (localhost:3000)
-npm run build    # runs `prisma migrate deploy` first, then `next build`
-npm run start    # production server
-npm run lint     # eslint
+npm run dev            # start dev server (localhost:3000)
+npm run build          # runs `prisma generate` first, then `next build` (does NOT run migrations)
+npm run migrate:deploy # apply pending migrations manually (run against a DIRECT / non-pooled DB URL)
+npm run start          # production server
+npm run lint           # eslint
 ```
+
+**Migrations are intentionally NOT part of `build`.** Running `prisma migrate deploy` during a Vercel build against the Neon **pooled** connection (`DATABASE_URL` has `pgbouncer=true`) fails with `P1002` — Prisma's migration engine takes a session-level advisory lock (`pg_advisory_lock`) that PgBouncer's transaction pooling can't hold, so it times out after 10s. So the build only runs `prisma generate`, and migrations are applied out-of-band via `npm run migrate:deploy` (point `DATABASE_URL` at a **direct**, non-pooled Neon endpoint — host without `-pooler`, no `pgbouncer=true` — when doing so).
 
 Database (local Postgres via Docker):
 ```bash
