@@ -124,7 +124,7 @@ export function PublishPostList({ initialPosts, initialNextCursor, search, sessi
 
 
             <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
-                    <LikePage postId={post.id} isLike={post.isLiked}/>
+                    <LikePage postId={post.id} isLike={post.isLiked} likeCount={post.likeCount}/>
                     
                     <div className="flex items-center gap-4">
                         { post.userId === session_user_id &&
